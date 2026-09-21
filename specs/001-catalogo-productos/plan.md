@@ -12,7 +12,7 @@ Enfoque técnico (detalle en [research.md](./research.md) y [data-model.md](./da
 
 - El producto es un agregado que posee sus **características de variación** y sus **opciones comercializables** (variantes). Toda opción vendible, incluso la de un producto sin variantes, es una opción con su propio precio, de modo que POS, recetas e inventario referencian siempre un único concepto estable (FR-013, FR-019).
 - Las características y sus valores son **datos**, no tipos ni columnas del modelo: los productos actuales y una futura categoría de tragos usan el mismo modelo (FR-007, FR-009, FR-017).
-- La baja de categorías y productos es un estado reversible; no existe eliminación definitiva (FR-018).
+- La baja de categorías y productos es un estado reversible; no existe eliminación definitiva (FR-018). La disponibilidad se marca a mano por opción (FR-015); la disponibilidad efectiva y la visibilidad pública se calculan al leer a partir de la baja, la marca manual y la imagen.
 - La API es administrativa y es la única superficie que esta feature expone. El catálogo público NO se ve afectado.
 
 ## Technical Context
@@ -48,7 +48,7 @@ Enfoque técnico (detalle en [research.md](./research.md) y [data-model.md](./da
 | V. Separación de frontends | Sí (API y frontend admin) | Cumple | Se crea solo el frontend administrativo. El catálogo público no se toca y esta feature no expone ningún endpoint público ni comparte estado con él. Si el catálogo público consumirá esta misma API u otra queda para su propia feature. |
 | VI. POS único canal de pedidos | No aplicable | — | La feature no crea ni modifica pedidos. |
 | VII. Reglas operativas | No aplicable | — | No trata mesas, barra, estados ni cobros. |
-| VIII. Extensibilidad de catálogo e inventario | Sí (modelo de productos y variantes) | Cumple | Escenario documentado en data-model.md, sección "Escenario de extensibilidad": nueva característica de variación, categoría de tragos y un producto de cada modalidad de inventario sin modificar el modelo. |
+| VIII. Extensibilidad de catálogo e inventario | Sí (modelo de productos y variantes) | Cumple | Escenario documentado en data-model.md, sección "Escenario de extensibilidad": nueva característica de variación, categoría de tragos y un producto de cada modalidad de inventario sin modificar el modelo. La marca de disponibilidad es manual y no incorpora conceptos de inventario. |
 | IX. Modelo de datos desde los requerimientos | Sí (crea modelo de datos) | Cumple | data-model.md indica el requerimiento de origen de cada entidad; no se usa el esquema SQL de referencia. |
 
 Re-evaluación posterior a Phase 1: sin cambios; todos los principios aplicables siguen cumpliéndose.

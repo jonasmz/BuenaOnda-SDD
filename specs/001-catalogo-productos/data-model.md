@@ -6,28 +6,28 @@ Modelo conceptual para el plan; el mapeo físico lo define la implementación. C
 
 ### Categoría
 
-Origen: `system_requirements.txt` §2 y §10; spec FR-001 a FR-004, FR-018.
+Origen: `system_requirements.txt` §2 y §10; spec FR-001 a FR-004a, FR-018.
 
 | Atributo | Descripción | Reglas |
 |----------|-------------|--------|
 | Id | Identificador único e inmutable | Generado por el sistema |
-| Nombre | Nombre de la categoría | Obligatorio, no vacío |
+| Nombre | Nombre de la categoría | Obligatorio, no vacío; único entre categorías (sin distinguir mayúsculas ni espacios de borde) |
 | Descripción | Texto opcional | Opcional |
 | Activa | Estado de vigencia | Se puede desactivar y reactivar; no se elimina |
 
-Relaciones: una categoría tiene cero o más productos. Una categoría sin productos es válida.
+Una categoría sin productos es válida.
 
 ### Producto
 
-Origen: §2, §9 y §10; spec FR-005 a FR-008, FR-018.
+Origen: §2, §9 y §10; spec FR-004, FR-004a, FR-005 a FR-008, FR-016, FR-018.
 
 | Atributo | Descripción | Reglas |
 |----------|-------------|--------|
 | Id | Identificador único e inmutable | Generado por el sistema |
-| Nombre | Nombre comercial | Obligatorio, no vacío |
+| Nombre | Nombre comercial | Obligatorio, no vacío; único dentro de su categoría |
 | Descripción | Texto | Opcional |
-| Imagen | Referencia de imagen ilustrativa (URL) | Opcional (Cuestión 9 abierta) |
-| Categoría | Exactamente una categoría | Obligatoria; debe ser una categoría activa al asignarla |
+| Imagen | Referencia de imagen ilustrativa (URL) | Opcional; sin imagen el producto no es visible al público |
+| Categoría | Exactamente una categoría | Obligatoria; debe estar activa al asignarla; el nombre no puede repetirse en la categoría destino |
 | Activo | Estado de vigencia | Se puede desactivar y reactivar; no se elimina |
 
 Relaciones: pertenece a una categoría; contiene cero o más características de variación y una o más opciones comercializables.
@@ -45,30 +45,44 @@ Pertenece a un solo producto; no existe catálogo global de características.
 
 ### Opción comercializable (variante)
 
-Origen: §4 (variantes del producto en el POS), §10; spec FR-008 a FR-013, FR-019.
+Origen: §4 (variantes del producto en el POS), §10; spec FR-008 a FR-013, FR-015, FR-019.
 
 | Atributo | Descripción | Reglas |
 |----------|-------------|--------|
 | Id | Identificador único e inmutable | Generado por el sistema; es la referencia para los consumidores |
 | Precio | Precio comercial de la opción | Obligatorio; decimal no negativo; moneda única del establecimiento |
 | Valores | Un valor de texto por cada característica del producto | Deben existir valores para todas las características y ninguno adicional |
+| Disponibilidad manual | Marca disponible / no disponible | Obligatoria al crear la opción; la fija el usuario administrativo; no cambia con la baja ni con la reactivación |
+| Descripción | Texto propio de la opción | Opcional |
+| Imagen | Referencia de imagen propia (URL) | Opcional; informativa, no condiciona la visibilidad del producto |
 
 Relaciones: pertenece a un producto; sus valores referencian características de ese mismo producto.
 
-## Invariantes del agregado Producto
+## Indicadores derivados (se calculan al leer; no se almacenan)
+
+| Indicador | Regla |
+|-----------|-------|
+| Disponibilidad efectiva de la opción | Disponibilidad manual y producto activo y categoría activa |
+| Disponibilidad del producto | Alguna de sus opciones con disponibilidad efectiva |
+| Visibilidad pública del producto | Producto activo, categoría activa y producto con imagen |
+
+## Invariantes
 
 1. Un producto sin características tiene exactamente una opción, con valores vacíos (FR-008).
 2. Un producto con características tiene al menos una opción, y cada opción define un valor no vacío para cada característica (FR-010).
 3. Dos opciones del mismo producto no comparten el mismo conjunto de valores, sin distinguir mayúsculas ni espacios de borde (FR-011).
 4. Los nombres de característica son únicos dentro del producto.
 5. Agregar una característica a un producto con opciones exige aportar en la misma operación su valor para cada opción existente; quitarla solo es válido si las opciones restantes siguen siendo distinguibles.
-6. Los identificadores de producto, característica y opción no cambian al editar (FR-018, FR-019).
-7. Un producto inactivo o de una categoría que se desactiva conserva su información; el catálogo no permite nuevos usos de elementos inactivos (asignar productos a una categoría inactiva, o modificar la estructura y precios de un producto inactivo antes de reactivarlo).
+6. Los identificadores de categoría, producto, característica y opción no cambian al editar (FR-018, FR-019).
+7. Un producto inactivo, o de una categoría inactiva, conserva su información; no admite modificar su estructura, precios ni marcas hasta reactivarlo, y no se puede asignar un producto a una categoría inactiva.
+8. Los nombres de categoría son únicos entre categorías; los de producto, únicos dentro de su categoría (FR-004a).
+9. La baja no altera la disponibilidad manual de las opciones (FR-018).
 
 ## Transiciones de estado
 
 - Categoría: Activa ⇄ Inactiva.
 - Producto: Activo ⇄ Inactivo.
+- Opción: la marca manual pasa libremente entre disponible y no disponible.
 - No existen otros estados ni eliminación.
 
 ## Trazabilidad requisito → modelo
@@ -76,15 +90,15 @@ Relaciones: pertenece a un producto; sus valores referencian características de
 | FR | Elemento del modelo |
 |----|---------------------|
 | FR-001 a FR-003 | Categoría |
-| FR-004 | Producto.Categoría (exactamente una) |
+| FR-004, FR-004a | Producto.Categoría (exactamente una); invariante 8 |
 | FR-005, FR-006 | Producto |
 | FR-007, FR-009, FR-010 | Característica de variación y valores como datos |
 | FR-008, FR-011, FR-012 | Opción comercializable e invariantes 1 a 5 |
 | FR-013, FR-014 | Opción.Precio, sin historial |
-| FR-015 | No se persiste en esta feature (research.md R-10) |
-| FR-016 | Producto.Imagen |
+| FR-015 | Opción.Disponibilidad manual; indicadores derivados |
+| FR-016 | Producto.Imagen; visibilidad pública derivada |
 | FR-017 | Ausencia de tipos y campos por producto |
-| FR-018 | Activa / Activo; invariante 7 |
+| FR-018 | Activa / Activo; invariantes 7 y 9; indicadores derivados |
 | FR-019 | Ids inmutables de producto y opción |
 
 ## Escenario de extensibilidad (Principio VIII)
@@ -96,7 +110,7 @@ Se comprueba sin modificar ninguna entidad, atributo ni invariante:
 3. **Producto de modalidad elaborada** (hamburguesa): se registra con la característica "modalidad" (simple, completa). Su futura receta se asociará desde la especificación de recetas, referenciando el Id del producto o de la opción; el catálogo no cambia.
 4. **Producto de stock directo** (pizza congelada, gaseosa): se registra igual que el anterior. Su control de existencias se definirá en inventario y referenciará el Id de la opción.
 
-El catálogo no contiene atributos de inventario ni de recetas, por lo que ambas modalidades se representan idénticamente en él.
+El catálogo no contiene atributos de inventario ni de recetas, por lo que ambas modalidades se representan idénticamente en él. La disponibilidad es una marca manual, no un concepto de inventario.
 
 ## Verificación con los productos actuales
 

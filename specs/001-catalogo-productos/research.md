@@ -26,11 +26,11 @@ Decisiones técnicas de Phase 0. No queda ningún `NEEDS CLARIFICATION` del Tech
 - **Rationale**: FR-007, FR-009, FR-010 y FR-017. Unidades y capacidades (por ejemplo "750 ml") son texto del catálogo; el sistema no interpreta unidades de medida, que pertenecen a especificaciones posteriores.
 - **Alternatives considered**: catálogo global de características o de valores (impone una lista global cerrada, contraria a FR-009).
 
-## R-5. Distinción entre opciones (FR-011)
+## R-5. Unicidad y distinción (FR-004a, FR-011)
 
-- **Decision**: dos opciones de un mismo producto no pueden tener el mismo conjunto de pares característica/valor, comparados sin distinguir mayúsculas ni espacios de borde. Los nombres de característica son únicos dentro del producto por la misma comparación. Se valida en el dominio y se refuerza con una restricción de unicidad en la base de datos.
-- **Rationale**: es el mínimo necesario para que la opción sea inequívoca sin decidir la unicidad de nombres de categorías o productos (Cuestión 8 abierta).
-- **Alternatives considered**: no imponer nada (contradice FR-011).
+- **Decision**: (a) el nombre de una categoría es único entre categorías; (b) el nombre de un producto es único dentro de su categoría, incluso al moverlo a otra; (c) dos opciones de un mismo producto no pueden tener el mismo conjunto de pares característica/valor; (d) los nombres de característica son únicos dentro del producto. Todas las comparaciones ignoran mayúsculas y espacios de borde (los acentos siguen siendo significativos). Se validan en el dominio y se refuerzan con restricciones de unicidad en la base de datos sobre la forma normalizada.
+- **Rationale**: FR-004a y FR-011 definen las reglas; el refuerzo en base de datos evita duplicados por concurrencia.
+- **Alternatives considered**: solo validar en la aplicación (permite duplicados bajo concurrencia).
 
 ## R-6. Identificadores estables para los consumidores
 
@@ -40,8 +40,8 @@ Decisiones técnicas de Phase 0. No queda ningún `NEEDS CLARIFICATION` del Tech
 
 ## R-7. Baja reversible
 
-- **Decision**: categorías y productos tienen un estado activo/inactivo. No hay operación de eliminación definitiva. Un elemento inactivo conserva su información; no puede elegirse para nuevos usos dentro del catálogo: no se puede asignar un producto a una categoría inactiva ni crear opciones o editar precios de un producto inactivo hasta reactivarlo (se permite reactivar y consultar).
-- **Rationale**: FR-018 y las decisiones de clarificación. La exposición a otros consumidores (POS, público) se define en sus features.
+- **Decision**: categorías y productos tienen un estado activo/inactivo. No hay operación de eliminación definitiva. Un elemento inactivo conserva su información y sus referencias siguen siendo válidas; no admite nuevos usos dentro del catálogo: no se puede asignar un producto a una categoría inactiva ni modificar la estructura, precios o marcas de un producto inactivo hasta reactivarlo (sí se puede consultar y reactivar). La baja implica no disponible y no visible al público (ver R-10) sin alterar la marca manual de las opciones.
+- **Rationale**: FR-018 y las decisiones de clarificación.
 - **Alternatives considered**: eliminación física con verificación de referencias (descartada por la clarificación).
 
 ## R-8. Pruebas, sin ampliar el stack obligatorio
@@ -50,17 +50,21 @@ Decisiones técnicas de Phase 0. No queda ningún `NEEDS CLARIFICATION` del Tech
 - **Rationale**: dependencias complementarias sin decisiones arquitectónicas contrarias a la constitución. Reutilizar `psql-17` evita agregar herramientas de contenedores que la constitución no requiere.
 - **Alternatives considered**: bases en memoria (no reproducen restricciones reales de PostgreSQL); librerías de contenedores de prueba (dependencia adicional innecesaria).
 
-## R-9. Imagen ilustrativa
+## R-9. Imágenes ilustrativas
 
-- **Decision**: el producto guarda una referencia de imagen opcional en forma de texto (URL). Esta feature no sube, almacena ni transforma archivos.
-- **Rationale**: FR-016 pide información de imagen para presentación posterior, no un mecanismo de carga. Es la decisión técnica más simple compatible con la spec. La obligatoriedad (Cuestión 9) sigue abierta; se permite ausencia porque no hay regla que la exija.
+- **Decision**: el producto y cada opción guardan una referencia de imagen opcional en forma de texto (URL). Esta feature no sube, almacena ni transforma archivos. El catálogo indica si el producto tiene imagen.
+- **Rationale**: FR-016 y FR-012 piden información de imagen para presentación posterior, no un mecanismo de carga. La imagen del producto es la que condiciona la visibilidad pública (R-10); la de la opción es informativa.
 - **Alternatives considered**: carga de archivos con almacenamiento propio (amplía el alcance y decide almacenamiento sin requisito).
 
-## R-10. Disponibilidad (FR-015)
+## R-10. Disponibilidad y visibilidad pública derivadas (FR-015, FR-016, FR-018)
 
-- **Decision**: esta feature NO persiste ni calcula disponibilidad. El único estado de vigencia del catálogo es activo/inactivo (R-7). El contrato de lectura se puede extender de forma compatible cuando se definan las Cuestiones 4 y 5.
-- **Rationale**: la spec prohíbe decidir la fuente y la semántica de la disponibilidad. Agregar un indicador manual la decidiría por suposición.
-- **Riesgo**: FR-015 queda satisfecho solo en forma de capacidad de extensión. Se recomienda resolver las Cuestiones 4 y 5 en `/speckit-clarify` antes de `/speckit-tasks` si se quiere que la feature entregue disponibilidad.
+- **Decision**: cada opción persiste una marca manual de disponibilidad, obligatoria al crearla (no se decide un valor por defecto). El catálogo calcula al leer, sin persistirlos:
+  - **Disponibilidad efectiva de una opción** = marca manual y producto activo y categoría activa.
+  - **Disponibilidad del producto** = alguna de sus opciones con disponibilidad efectiva.
+  - **Visibilidad pública del producto** = producto activo, categoría activa y producto con imagen.
+  La baja o la reactivación nunca modifican la marca manual. La disponibilidad no se deriva del inventario.
+- **Rationale**: implementa las decisiones de clarificación sin duplicar estados que pudieran desincronizarse. Los indicadores calculados quedan disponibles para POS y catálogo público, que decidirán cómo usarlos en sus propias features.
+- **Alternatives considered**: persistir un indicador de visibilidad (riesgo de inconsistencia con la baja y la imagen).
 
 ## R-11. Contrato HTTP administrativo
 
@@ -76,9 +80,7 @@ Decisiones técnicas de Phase 0. No queda ningún `NEEDS CLARIFICATION` del Tech
 
 ## Cuestiones funcionales que siguen abiertas (no resueltas aquí)
 
-- Cuestión 4 y 5: significado de "disponible" y diferencia entre activo, vendible y visible (afecta R-10).
 - Cuestión 7 (parte de modificación): efecto de modificar una variante sobre referencias existentes. Por R-6 el identificador no cambia.
-- Cuestión 8: unicidad de nombres de categorías y productos. Solo se impone R-5.
-- Cuestión 9: obligatoriedad de la imagen (R-9 la trata como opcional).
-- Cuestión 10: qué información, además del precio, puede variar por opción. Hoy la opción solo tiene valores de variación, precio y estado de vigencia implícito en el producto.
-- Baja de opciones individuales: la spec no define retirar una opción; se propone tratarlo en clarify.
+- Comparación de acentos en los nombres: hoy son significativos (R-5).
+- Retirar una opción individual: la spec no define esa operación; no existe en esta feature.
+- Si el catálogo público mostrará productos no disponibles: lo define la feature del catálogo público.

@@ -32,8 +32,16 @@ Cada uno se verifica desde la interfaz administrativa o directamente contra la A
 | 10 | Modificar el precio de una opción | La consulta devuelve el nuevo precio; no hay historial | FR-014 |
 | 11 | Dar de baja y reactivar un producto y una categoría | Conservan su información; no hay operación de eliminación | FR-018 |
 | 12 | Asignar un producto a una categoría inactiva | Se rechaza con conflicto (409) | FR-018 |
-| 13 | Crear un producto sin imagen | Se acepta | Cuestión 9 (provisional) |
+| 13 | Crear un producto sin imagen | Se acepta, figura como sin imagen y su visibilidad pública es falsa | FR-016 |
+| 14 | Asignarle imagen al producto | Su visibilidad pública pasa a verdadera si está activo y su categoría está activa | FR-016 |
+| 15 | Marcar una opción como no disponible | Solo esa opción no está disponible; el producto sigue disponible mientras otra lo esté | FR-015 |
+| 16 | Marcar no disponibles todas las opciones de un producto | El producto figura no disponible | FR-015 |
+| 17 | Dar de baja un producto y reactivarlo | Durante la baja no es disponible ni visible; al reactivar, las marcas manuales de sus opciones se conservan | FR-018 |
+| 18 | Dar de baja una categoría con productos | Sus productos dejan de ser disponibles y visibles; se conservan sus datos | FR-018 |
+| 19 | Crear una categoría con nombre repetido (mayúsculas distintas) | Se rechaza con conflicto (409) | FR-004a |
+| 20 | Crear dos productos con el mismo nombre en distintas categorías | Se aceptan; en la misma categoría se rechaza (409) | FR-004a |
+| 21 | Asignar descripción e imagen propias a una opción | Se guardan y no alteran la visibilidad del producto | FR-012 |
 
 ## Resultado esperado
 
-Los escenarios 1 a 13 pasan y los productos actuales de `system_requirements.txt` §9 se pueden representar según la tabla de verificación de data-model.md.
+Los escenarios 1 a 21 pasan y los productos actuales de `system_requirements.txt` §9 se pueden representar según la tabla de verificación de data-model.md.
