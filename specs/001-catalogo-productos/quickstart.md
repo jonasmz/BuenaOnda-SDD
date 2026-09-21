@@ -38,10 +38,14 @@ Cada uno se verifica desde la interfaz administrativa o directamente contra la A
 | 16 | Marcar no disponibles todas las opciones de un producto | El producto figura no disponible | FR-015 |
 | 17 | Dar de baja un producto y reactivarlo | Durante la baja no es disponible ni visible; al reactivar, las marcas manuales de sus opciones se conservan | FR-018 |
 | 18 | Dar de baja una categoría con productos | Sus productos dejan de ser disponibles y visibles; se conservan sus datos | FR-018 |
-| 19 | Crear una categoría con nombre repetido (mayúsculas distintas) | Se rechaza con conflicto (409) | FR-004a |
-| 20 | Crear dos productos con el mismo nombre en distintas categorías | Se aceptan; en la misma categoría se rechaza (409) | FR-004a |
+| 19 | Crear una categoría con nombre repetido (mayúsculas distintas) | Se rechaza con conflicto (409) | FR-020 |
+| 20 | Crear dos productos con el mismo nombre en distintas categorías | Se aceptan; en la misma categoría se rechaza (409) | FR-020 |
 | 21 | Asignar descripción e imagen propias a una opción | Se guardan y no alteran la visibilidad del producto | FR-012 |
+| 22 | Eliminar una opción cargada por error que no fue referenciada y no es la última | Se elimina y el producto conserva sus demás opciones | FR-021 |
+| 23 | Intentar eliminar la única opción de un producto | Se rechaza con conflicto (409) | FR-021 |
+| 24 | Dar de baja una opción y volver a crear una opción con los mismos valores | La opción figura no disponible y su visibilidad pública es falsa; la nueva se rechaza (409); al reactivar la original vuelve a estar disponible según su marca | FR-021, FR-011 |
+| 25 | Intentar eliminar una opción referenciada | Se rechaza con conflicto (409); se puede dar de baja. Cubierto solo por prueba automatizada con un doble de `IOptionReferenceChecker`, porque aún no existen consumidores que referencien opciones | FR-021 |
 
 ## Resultado esperado
 
-Los escenarios 1 a 21 pasan y los productos actuales de `system_requirements.txt` §9 se pueden representar según la tabla de verificación de data-model.md.
+Los escenarios 1 a 25 pasan y los productos actuales de `system_requirements.txt` §9 se pueden representar según la tabla de verificación de data-model.md.

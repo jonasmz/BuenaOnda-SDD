@@ -26,11 +26,17 @@ Decisiones técnicas de Phase 0. No queda ningún `NEEDS CLARIFICATION` del Tech
 - **Rationale**: FR-007, FR-009, FR-010 y FR-017. Unidades y capacidades (por ejemplo "750 ml") son texto del catálogo; el sistema no interpreta unidades de medida, que pertenecen a especificaciones posteriores.
 - **Alternatives considered**: catálogo global de características o de valores (impone una lista global cerrada, contraria a FR-009).
 
-## R-5. Unicidad y distinción (FR-004a, FR-011)
+## R-5. Unicidad y distinción (FR-020, FR-011)
 
 - **Decision**: (a) el nombre de una categoría es único entre categorías; (b) el nombre de un producto es único dentro de su categoría, incluso al moverlo a otra; (c) dos opciones de un mismo producto no pueden tener el mismo conjunto de pares característica/valor; (d) los nombres de característica son únicos dentro del producto. Todas las comparaciones ignoran mayúsculas y espacios de borde (los acentos siguen siendo significativos). Se validan en el dominio y se refuerzan con restricciones de unicidad en la base de datos sobre la forma normalizada.
-- **Rationale**: FR-004a y FR-011 definen las reglas; el refuerzo en base de datos evita duplicados por concurrencia.
+- **Rationale**: FR-020 y FR-011 definen las reglas; el refuerzo en base de datos evita duplicados por concurrencia.
 - **Alternatives considered**: solo validar en la aplicación (permite duplicados bajo concurrencia).
+
+## R-5b. Valores reservados
+
+- **Decision**: los valores de variación de una opción dada de baja siguen contando para la distinción de opciones (R-5) mientras la opción exista. Para volver a usar esa combinación se reactiva la opción o se la elimina si no fue referenciada.
+- **Rationale**: FR-021 y FR-011; evita dos opciones indistinguibles en cualquier momento.
+- **Alternatives considered**: ignorar las opciones inactivas al comprobar la unicidad (permite ambigüedad al reactivar).
 
 ## R-6. Identificadores estables para los consumidores
 
@@ -59,12 +65,20 @@ Decisiones técnicas de Phase 0. No queda ningún `NEEDS CLARIFICATION` del Tech
 ## R-10. Disponibilidad y visibilidad pública derivadas (FR-015, FR-016, FR-018)
 
 - **Decision**: cada opción persiste una marca manual de disponibilidad, obligatoria al crearla (no se decide un valor por defecto). El catálogo calcula al leer, sin persistirlos:
-  - **Disponibilidad efectiva de una opción** = marca manual y producto activo y categoría activa.
+  - **Disponibilidad efectiva de una opción** = marca manual, opción activa, producto activo y categoría activa.
   - **Disponibilidad del producto** = alguna de sus opciones con disponibilidad efectiva.
   - **Visibilidad pública del producto** = producto activo, categoría activa y producto con imagen.
+  - **Visibilidad pública de una opción** = opción activa y visibilidad pública del producto.
   La baja o la reactivación nunca modifican la marca manual. La disponibilidad no se deriva del inventario.
 - **Rationale**: implementa las decisiones de clarificación sin duplicar estados que pudieran desincronizarse. Los indicadores calculados quedan disponibles para POS y catálogo público, que decidirán cómo usarlos en sus propias features.
 - **Alternatives considered**: persistir un indicador de visibilidad (riesgo de inconsistencia con la baja y la imagen).
+
+## R-13. Retiro de opciones y referencias (FR-021)
+
+- **Decision**: cada opción tiene un estado activa/inactiva. Se puede eliminar definitivamente solo si ninguna funcionalidad consumidora la referencia y no es la única opción del producto; en otro caso solo se da de baja (reversible). El catálogo consulta las referencias mediante un puerto de salida de la capa de aplicación, `IOptionReferenceChecker`. Hoy su única implementación (en Infrastructure) responde siempre "no referenciada", porque aún no existen consumidores.
+- **Rationale**: respeta la decisión de clarificación sin acoplar el catálogo a POS, recetas o inventario, y cumple el Principio III (el consumidor real se agrega como adaptador).
+- **Obligación futura**: cada feature que referencie opciones (POS, recetas, inventario) DEBE extender esa comprobación; de lo contrario se podrían eliminar opciones referenciadas. Las pruebas de integración usan un doble del puerto que responde "referenciada".
+- **Alternatives considered**: consulta directa a tablas de otras features (acoplamiento); prohibir toda eliminación (descartado por la clarificación).
 
 ## R-11. Contrato HTTP administrativo
 
@@ -82,5 +96,4 @@ Decisiones técnicas de Phase 0. No queda ningún `NEEDS CLARIFICATION` del Tech
 
 - Cuestión 7 (parte de modificación): efecto de modificar una variante sobre referencias existentes. Por R-6 el identificador no cambia.
 - Comparación de acentos en los nombres: hoy son significativos (R-5).
-- Retirar una opción individual: la spec no define esa operación; no existe en esta feature.
 - Si el catálogo público mostrará productos no disponibles: lo define la feature del catálogo público.

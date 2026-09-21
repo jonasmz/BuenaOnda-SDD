@@ -9,9 +9,9 @@ Tipos: `id` es un identificador único (GUID); `price` es un decimal no negativo
 | Método y ruta | Descripción | FR |
 |---------------|-------------|----|
 | `GET /categories?includeInactive=false` | Lista categorías | FR-002 |
-| `POST /categories` | Crea una categoría | FR-001, FR-004a |
+| `POST /categories` | Crea una categoría | FR-001, FR-020 |
 | `GET /categories/{id}` | Consulta una categoría | FR-002 |
-| `PUT /categories/{id}` | Modifica nombre y descripción | FR-003, FR-004a |
+| `PUT /categories/{id}` | Modifica nombre y descripción | FR-003, FR-020 |
 | `POST /categories/{id}/deactivate` | Da de baja (reversible) | FR-018 |
 | `POST /categories/{id}/reactivate` | Reactiva | FR-018 |
 
@@ -64,12 +64,13 @@ Respuesta de consulta:
   "characteristics": [{ "id": "…", "name": "…" }],
   "options": [{
     "id": "…", "values": {}, "price": 0, "description": null, "imageUrl": null,
-    "isMarkedAvailable": true, "isAvailable": true
+    "isMarkedAvailable": true, "isActive": true, "isAvailable": true,
+    "isVisibleToPublic": false
   }]
 }
 ```
 
-`isAvailable` (producto y opción) y `isVisibleToPublic` son indicadores derivados de solo lectura (data-model.md); `isMarkedAvailable` es la marca manual.
+`isAvailable` e `isVisibleToPublic` (producto y opción) son indicadores derivados de solo lectura (data-model.md); `isMarkedAvailable` es la marca manual.
 
 ## Variación y opciones de un producto
 
@@ -78,14 +79,17 @@ Respuesta de consulta:
 | `POST /products/{id}/options` | Agrega una opción comercializable | FR-008, FR-010 |
 | `PUT /products/{id}/options/{optionId}` | Modifica valores, precio, descripción e imagen de una opción | FR-012, FR-014 |
 | `PUT /products/{id}/options/{optionId}/availability` | Fija la marca manual de disponibilidad: `{ "isMarkedAvailable": bool }` | FR-015 |
+| `POST /products/{id}/options/{optionId}/deactivate` | Da de baja una opción (reversible) | FR-021 |
+| `POST /products/{id}/options/{optionId}/reactivate` | Reactiva una opción | FR-021 |
+| `DELETE /products/{id}/options/{optionId}` | Elimina definitivamente una opción no referenciada que no sea la última del producto | FR-021 |
 | `POST /products/{id}/characteristics` | Agrega una característica; incluye el valor para cada opción existente | FR-009, FR-010 |
 | `DELETE /products/{id}/characteristics/{characteristicId}` | Quita una característica si las opciones siguen siendo distinguibles | FR-009 |
 
-Cuerpo de opción: `{ "values": { "<característica>": "<valor>" }, "price": number, "isMarkedAvailable": bool, "description": string|null, "imageUrl": string|null }`.
+Cuerpo de opción en `POST`: `{ "values": { "<característica>": "<valor>" }, "price": number, "isMarkedAvailable": bool, "description": string|null, "imageUrl": string|null }`. El cuerpo del `PUT` es el mismo sin `isMarkedAvailable`: la marca manual solo se modifica con `PUT …/availability`.
 
 Cuerpo de nueva característica: `{ "name": string, "valuesForExistingOptions": { "<optionId>": "<valor>" } }`.
 
-No existe operación para eliminar productos, categorías ni opciones.
+No existe operación para eliminar productos ni categorías. Las opciones solo se eliminan con `DELETE` bajo las condiciones de FR-021; si están referenciadas se responde 409 y se debe usar la baja.
 
 ## Errores
 
@@ -93,7 +97,7 @@ No existe operación para eliminar productos, categorías ni opciones.
 |--------|--------|
 | 400 | Datos ausentes o inválidos (nombre vacío, precio negativo, valores incompletos o de más, marca de disponibilidad ausente) |
 | 404 | El recurso no existe |
-| 409 | Nombre de categoría repetido; nombre de producto repetido en su categoría; opción indistinguible de otra del mismo producto; característica repetida; categoría inactiva al asignar producto; modificación de un producto inactivo |
+| 409 | Eliminar una opción referenciada o la última opción de un producto; valores de variación de una opción ya existente, aunque esté inactiva; nombre de categoría repetido; nombre de producto repetido en su categoría; opción indistinguible de otra del mismo producto; característica repetida; categoría inactiva al asignar producto; modificación de un producto inactivo |
 
 ## Consumidores futuros
 

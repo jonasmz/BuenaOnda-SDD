@@ -6,7 +6,7 @@ Modelo conceptual para el plan; el mapeo físico lo define la implementación. C
 
 ### Categoría
 
-Origen: `system_requirements.txt` §2 y §10; spec FR-001 a FR-004a, FR-018.
+Origen: `system_requirements.txt` §2 y §10; spec FR-001 a FR-020, FR-018.
 
 | Atributo | Descripción | Reglas |
 |----------|-------------|--------|
@@ -19,7 +19,7 @@ Una categoría sin productos es válida.
 
 ### Producto
 
-Origen: §2, §9 y §10; spec FR-004, FR-004a, FR-005 a FR-008, FR-016, FR-018.
+Origen: §2, §9 y §10; spec FR-004, FR-020, FR-005 a FR-008, FR-016, FR-018.
 
 | Atributo | Descripción | Reglas |
 |----------|-------------|--------|
@@ -45,7 +45,7 @@ Pertenece a un solo producto; no existe catálogo global de características.
 
 ### Opción comercializable (variante)
 
-Origen: §4 (variantes del producto en el POS), §10; spec FR-008 a FR-013, FR-015, FR-019.
+Origen: §4 (variantes del producto en el POS), §10; spec FR-008 a FR-013, FR-015, FR-019, FR-021.
 
 | Atributo | Descripción | Reglas |
 |----------|-------------|--------|
@@ -53,6 +53,7 @@ Origen: §4 (variantes del producto en el POS), §10; spec FR-008 a FR-013, FR-0
 | Precio | Precio comercial de la opción | Obligatorio; decimal no negativo; moneda única del establecimiento |
 | Valores | Un valor de texto por cada característica del producto | Deben existir valores para todas las características y ninguno adicional |
 | Disponibilidad manual | Marca disponible / no disponible | Obligatoria al crear la opción; la fija el usuario administrativo; no cambia con la baja ni con la reactivación |
+| Activa | Estado de vigencia | Se puede dar de baja y reactivar; solo se elimina definitivamente si nunca fue referenciada y no es la última opción del producto (FR-021) |
 | Descripción | Texto propio de la opción | Opcional |
 | Imagen | Referencia de imagen propia (URL) | Opcional; informativa, no condiciona la visibilidad del producto |
 
@@ -62,9 +63,10 @@ Relaciones: pertenece a un producto; sus valores referencian características de
 
 | Indicador | Regla |
 |-----------|-------|
-| Disponibilidad efectiva de la opción | Disponibilidad manual y producto activo y categoría activa |
+| Disponibilidad efectiva de la opción | Disponibilidad manual, opción activa, producto activo y categoría activa |
 | Disponibilidad del producto | Alguna de sus opciones con disponibilidad efectiva |
 | Visibilidad pública del producto | Producto activo, categoría activa y producto con imagen |
+| Visibilidad pública de la opción | Opción activa y visibilidad pública del producto |
 
 ## Invariantes
 
@@ -74,23 +76,27 @@ Relaciones: pertenece a un producto; sus valores referencian características de
 4. Los nombres de característica son únicos dentro del producto.
 5. Agregar una característica a un producto con opciones exige aportar en la misma operación su valor para cada opción existente; quitarla solo es válido si las opciones restantes siguen siendo distinguibles.
 6. Los identificadores de categoría, producto, característica y opción no cambian al editar (FR-018, FR-019).
-7. Un producto inactivo, o de una categoría inactiva, conserva su información; no admite modificar su estructura, precios ni marcas hasta reactivarlo, y no se puede asignar un producto a una categoría inactiva.
-8. Los nombres de categoría son únicos entre categorías; los de producto, únicos dentro de su categoría (FR-004a).
+7. Un producto inactivo, o de una categoría inactiva, conserva su información; no admite modificar su estructura, opciones, precios ni marcas hasta reactivarlo, y no se puede asignar un producto a una categoría inactiva.
+8. Los nombres de categoría son únicos entre categorías; los de producto, únicos dentro de su categoría (FR-020).
 9. La baja no altera la disponibilidad manual de las opciones (FR-018).
+10. Un producto conserva siempre al menos una opción: no se puede eliminar la última (FR-021). Las opciones inactivas cuentan como opciones.
+11. Una opción solo se elimina definitivamente si ninguna funcionalidad consumidora la ha referenciado (comprobación mediante el puerto de referencias); si fue referenciada, solo se da de baja (FR-021).
+12. Los valores de variación de una opción inactiva siguen reservados mientras la opción exista (invariante 3).
 
 ## Transiciones de estado
 
 - Categoría: Activa ⇄ Inactiva.
 - Producto: Activo ⇄ Inactivo.
-- Opción: la marca manual pasa libremente entre disponible y no disponible.
-- No existen otros estados ni eliminación.
+- Opción: Activa ⇄ Inactiva; la marca manual pasa libremente entre disponible y no disponible.
+- Opción: puede eliminarse definitivamente solo en las condiciones del invariante 11.
+- Categorías y productos no se eliminan; no existen otros estados.
 
 ## Trazabilidad requisito → modelo
 
 | FR | Elemento del modelo |
 |----|---------------------|
 | FR-001 a FR-003 | Categoría |
-| FR-004, FR-004a | Producto.Categoría (exactamente una); invariante 8 |
+| FR-004, FR-020 | Producto.Categoría (exactamente una); invariante 8 |
 | FR-005, FR-006 | Producto |
 | FR-007, FR-009, FR-010 | Característica de variación y valores como datos |
 | FR-008, FR-011, FR-012 | Opción comercializable e invariantes 1 a 5 |
@@ -99,6 +105,7 @@ Relaciones: pertenece a un producto; sus valores referencian características de
 | FR-016 | Producto.Imagen; visibilidad pública derivada |
 | FR-017 | Ausencia de tipos y campos por producto |
 | FR-018 | Activa / Activo; invariantes 7 y 9; indicadores derivados |
+| FR-021 | Opción.Activa; invariantes 10 a 12 |
 | FR-019 | Ids inmutables de producto y opción |
 
 ## Escenario de extensibilidad (Principio VIII)
@@ -119,5 +126,5 @@ El catálogo no contiene atributos de inventario ni de recetas, por lo que ambas
 | Papas fritas | tamaño | chica, grande |
 | Milanesa / hamburguesa | modalidad | simple, completa |
 | Pizza | variedad | una opción por variedad |
-| Gaseosa, agua mineral, cerveza | presentación (y marca como característica o como producto, a decidir al cargar el catálogo) | una por presentación |
+| Gaseosa (un producto por marca: Coca-Cola, Sprite…), agua mineral, cerveza | presentación | una por presentación |
 | Agua saborizada | presentación y sabor | una por combinación |
