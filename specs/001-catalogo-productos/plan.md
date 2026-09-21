@@ -6,13 +6,12 @@
 
 ## Summary
 
-Se implementa la gestión administrativa del catálogo comercial (categorías, productos, variantes y precios) definida en la especificación. El repositorio no contiene todavía código de aplicación, por lo que esta feature crea el esqueleto mínimo necesario: una solución backend .NET con arquitectura hexagonal y una aplicación Angular administrativa con el módulo de catálogo.
+Se implementa la gestión administrativa del catálogo comercial (categorías, productos y precios) definida en la especificación. El repositorio no contiene todavía código de aplicación, por lo que esta feature crea el esqueleto mínimo necesario: una solución backend .NET con arquitectura hexagonal y una aplicación Angular administrativa con el módulo de catálogo.
 
 Enfoque técnico (detalle en [research.md](./research.md) y [data-model.md](./data-model.md)):
 
-- El producto es un agregado que posee sus **características de variación** y sus **opciones comercializables** (variantes). Toda opción vendible, incluso la de un producto sin variantes, es una opción con su propio precio, de modo que POS, recetas e inventario referencian siempre un único concepto estable (FR-013, FR-019).
-- Las características y sus valores son **datos**, no tipos ni columnas del modelo: los productos actuales y una futura categoría de tragos usan el mismo modelo (FR-007, FR-009, FR-017).
-- La baja de categorías y productos es un estado reversible; no existe eliminación definitiva (FR-018). Las opciones también tienen baja reversible y solo se eliminan si nunca fueron referenciadas y no son las últimas del producto; las referencias se consultan mediante un puerto de salida sin consumidores por ahora (FR-021, research R-13). La disponibilidad se marca a mano por opción (FR-015); la disponibilidad efectiva y la visibilidad pública se calculan al leer a partir de la baja, la marca manual y la imagen.
+- El catálogo es **plano**: `Producto` y `Categoría` son agregados simples; cada presentación o variedad vendida por separado es un producto con su propio precio y disponibilidad. No existen variantes, opciones ni características de variación (constitución v2.0.0, Principio VIII; FR-007). POS, recetas e inventario referencian siempre el identificador de producto (FR-014).
+- La baja de categorías y productos es un estado reversible; no existe eliminación definitiva (FR-013). La disponibilidad se marca a mano por producto (FR-010); la disponibilidad efectiva y la visibilidad pública se calculan al leer a partir de la baja, la marca manual y la imagen.
 - La API es administrativa y es la única superficie que esta feature expone. El catálogo público NO se ve afectado.
 
 ## Technical Context
@@ -43,12 +42,12 @@ Enfoque técnico (detalle en [research.md](./research.md) y [data-model.md](./da
 |-----------|--------|-----------|-----------|
 | I. Desarrollo dirigido por especificaciones | Sí | Cumple | Cada entidad, regla y endpoint traza a un FR de spec.md (tablas de trazabilidad en data-model.md y contracts). Los criterios de aceptación permanecen en spec.md; no se duplican. Lo no definido queda en "Cuestiones abiertas" de research.md, sin inventarlo. |
 | II. Disciplina de alcance | Sí | Cumple | Ninguna entidad ni endpoint pertenece a la lista fuera de alcance (sin clientes, sucursales, pedidos, recetas ni inventario). |
-| III. Arquitectura hexagonal | Sí (nuevo backend) | Cumple | Proyectos Domain, Application, Infrastructure y Api con dependencias hacia el núcleo (ver Project Structure y research.md R-1). La comprobación de referencias de opciones es un puerto de la capa de aplicación (R-13). EF Core y Npgsql solo en Infrastructure. Autenticación/JWT no forma parte de esta feature. |
+| III. Arquitectura hexagonal | Sí (nuevo backend) | Cumple | Proyectos Domain, Application, Infrastructure y Api con dependencias hacia el núcleo (ver Project Structure y research.md R-1). EF Core y Npgsql solo en Infrastructure. Autenticación/JWT no forma parte de esta feature. |
 | IV. Stack tecnológico | Sí | Cumple (con excepción transitoria autorizada) | Stack obligatorio intacto. Complementarias declaradas y justificadas (Npgsql, xUnit, ejecutor de pruebas de Angular). PostgreSQL 17 usado mediante `psql-17`. La ausencia de autenticación se ampara en la excepción transitoria del Principio IV (constitución v1.2.0): rutas agrupadas bajo `/api/admin/catalog`, sin despliegue fuera de desarrollo y cierre con la feature de usuarios y roles (ver Complexity Tracking). |
 | V. Separación de frontends | Sí (API y frontend admin) | Cumple | Se crea solo el frontend administrativo. El catálogo público no se toca y esta feature no expone ningún endpoint público ni comparte estado con él. Si el catálogo público consumirá esta misma API u otra queda para su propia feature. |
 | VI. POS único canal de pedidos | No aplicable | — | La feature no crea ni modifica pedidos. |
 | VII. Reglas operativas | No aplicable | — | No trata mesas, barra, estados ni cobros. |
-| VIII. Extensibilidad de catálogo e inventario | Sí (modelo de productos y variantes) | Cumple | Escenario documentado en data-model.md, sección "Escenario de extensibilidad": nueva característica de variación, categoría de tragos y un producto de cada modalidad de inventario sin modificar el modelo. La marca de disponibilidad es manual y no incorpora conceptos de inventario. |
+| VIII. Catálogo plano y extensibilidad | Sí (modelo de productos) | Cumple (constitución v2.0.0) | El modelo no contiene variantes, opciones ni características. Escenario documentado en data-model.md, sección "Escenario de extensibilidad": categoría de tragos, presentación nueva y un producto de cada modalidad de inventario sin modificar el modelo. La marca de disponibilidad es manual y no incorpora conceptos de inventario. |
 | IX. Modelo de datos desde los requerimientos | Sí (crea modelo de datos) | Cumple | data-model.md indica el requerimiento de origen de cada entidad; no se usa el esquema SQL de referencia. |
 
 Re-evaluación posterior a Phase 1: sin cambios; todos los principios aplicables siguen cumpliéndose.

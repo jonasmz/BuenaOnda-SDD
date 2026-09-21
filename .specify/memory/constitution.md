@@ -1,18 +1,22 @@
 <!--
 Sync Impact Report
-- Versión: 1.1.0 → 1.2.0 (MINOR). Motivo: se agrega una excepción transitoria y acotada al
-  Principio IV (guía materialmente ampliada según la política de versionado); no se elimina ni
-  redefine ningún principio.
+- Versión: 1.2.0 → 2.0.0 (MAJOR). Motivo: se redefine la regla central del Principio VIII: se elimina
+  la exigencia de representar variantes de producto (clases de variación) y se adopta un catálogo
+  plano en el que cada tamaño, presentación, sabor o variedad es un producto distinto. Según el
+  esquema de versionado, redefinir un principio fundamental es un cambio MAJOR.
 - Principios agregados o eliminados: ninguno; numeración I a IX intacta.
-- Principio con cambio normativo: IV (excepción transitoria a la exigencia de Identity, JWT y
-  autorización en funcionalidades administrativas hasta que exista la implementación de usuarios
-  y roles, con condiciones de cierre y registro en el plan).
-- Sin cambios: alcance funcional, stack tecnológico, demás principios, gobernanza, jerarquía de
-  fuentes y esquema de versionado. No se definen roles ni permisos ni se incorporan tecnologías.
-- Origen: `/speckit.analyze` de la feature 001 (hallazgo D1) y decisión expresa del responsable del
-  proyecto de tratar la falta de autenticación mediante enmienda formal.
+- Principio con cambio normativo: VIII (catálogo plano sin variantes; se conservan la extensibilidad
+  ante productos nuevos, la futura incorporación de tragos y las dos modalidades de inventario; la
+  verificación pasa de "nuevo tipo de variante" a "producto nuevo sin modificar el modelo").
+- Sin cambios: alcance funcional, stack tecnológico, demás principios (incluida la excepción
+  transitoria del Principio IV), gobernanza, jerarquía de fuentes y esquema de versionado.
+- Origen: decisión expresa del responsable del proyecto de eliminar por completo las variantes por
+  considerarlas complejidad innecesaria para esta aplicación.
+- Impacto: la especificación, el plan, el modelo de datos, el contrato, las tareas y el código de la
+  feature 001 se rehacen sin variantes. Los requerimientos funcionales que mencionen variantes
+  (`../docs/system_requirements.txt`) DEBEN actualizarse por separado (Principio IX).
 - Plantillas: sin cambios requeridos.
-- TODOs diferidos: ninguno.
+- TODOs diferidos: actualizar los requerimientos funcionales para reflejar el catálogo plano.
 -->
 
 # Constitución de BuenaOndaSK
@@ -219,13 +223,14 @@ transiciones sin especificación.
 
 **Regla**:
 
-- El modelo de productos DEBE representar distintas clases de variación (tamaños, presentaciones,
-  sabores, variedades y otras definibles después) sin estructuras específicas por producto derivadas
-  de los ejemplos actuales.
-- Incorporar nuevos productos o variantes NO DEBE requerir rediseñar el catálogo; el plan DEBE
-  demostrarlo. La futura incorporación de tragos DEBE ser posible sin rediseñar el modelo de
-  productos, pero NO DEBEN implementarse funcionalidades específicas de tragos hasta que se
-  requieran.
+- El catálogo DEBE ser plano: cada tamaño, presentación, sabor o variedad que se vende por separado
+  es un producto distinto, con su propio nombre y precio. El modelo NO DEBE incluir variantes,
+  opciones comercializables, características de variación ni estructuras equivalentes.
+- El modelo de productos NO DEBE incluir estructuras específicas por producto derivadas de los
+  ejemplos actuales.
+- Incorporar nuevos productos NO DEBE requerir rediseñar el catálogo; el plan DEBE demostrarlo. La
+  futura incorporación de tragos DEBE ser posible sin rediseñar el modelo de productos, pero NO
+  DEBEN implementarse funcionalidades específicas de tragos hasta que se requieran.
 - El inventario DEBE contemplar dos modalidades conceptuales: productos elaborados (asociables a
   receta, con ingredientes y cantidades cuyo consumo pueda derivarse de la elaboración o venta) y
   productos de stock directo (controlados por existencias, sin receta necesaria).
@@ -235,9 +240,11 @@ transiciones sin especificación.
 
 **Justificación**: los requerimientos piden extensibilidad explícita y dos modalidades de inventario.
 
-**Verificación**: cuando el plan diseñe o modifique el modelo de productos, variantes o inventario,
-`/speckit.plan` DEBE incluir un escenario documentado que agregue un nuevo tipo de
-variante y un producto de cada modalidad de inventario sin modificar el modelo existente.
+**Verificación**: cuando el plan diseñe o modifique el modelo de productos o de inventario,
+`/speckit.plan` DEBE incluir un escenario documentado que agregue un producto de una categoría nueva
+y un producto de cada modalidad de inventario sin modificar el modelo existente;
+`/speckit.analyze` DEBE reportar cualquier concepto de variante que reaparezca en especificaciones,
+planes o tareas.
 
 ### IX. El modelo de datos surge de los requerimientos, no del esquema SQL de referencia
 
@@ -306,4 +313,4 @@ requerimientos siguen siendo la fuente de verdad sobre las capacidades concretas
 **Versionado** (semántico simple): MAJOR = elimina o redefine principios fundamentales;
 MINOR = agrega principios o restricciones; PATCH = aclaraciones de redacción sin cambio normativo.
 
-**Versión**: 1.2.0 | **Ratificada**: 2026-09-21 | **Última modificación**: 2026-09-21
+**Versión**: 2.0.0 | **Ratificada**: 2026-09-21 | **Última modificación**: 2026-09-21
