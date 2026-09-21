@@ -18,4 +18,15 @@ public static class DependencyInjection
         services.AddScoped<IProductRepository, ProductRepository>();
         return services;
     }
+
+    /// <summary>
+    /// Aplica las migraciones pendientes de EF Core. Se usa al arrancar en desarrollo, para que una base
+    /// nueva (por ejemplo la del contenedor de Docker Compose) quede lista sin pasos manuales.
+    /// </summary>
+    public static async Task ApplyMigrationsAsync(this IServiceProvider services, CancellationToken cancellationToken = default)
+    {
+        await using var scope = services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+        await dbContext.Database.MigrateAsync(cancellationToken);
+    }
 }

@@ -1,6 +1,6 @@
 # Entorno de desarrollo con recarga en caliente.
 #   Front (Angular): http://localhost:8855   API (.NET): http://localhost:1806
-# Uso: docker compose up   (las migraciones de EF no se aplican automáticamente)
+# Uso: docker compose up   (en desarrollo la API aplica las migraciones de EF al arrancar)
 name: buenaonda-sdd
 
 services:

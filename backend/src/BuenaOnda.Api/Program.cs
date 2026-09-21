@@ -20,6 +20,9 @@ app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
+    // Solo en desarrollo: una base nueva queda migrada al arrancar; en otros entornos las migraciones
+    // se aplican de forma explícita.
+    await app.Services.ApplyMigrationsAsync();
     app.MapOpenApi();
 }
 
