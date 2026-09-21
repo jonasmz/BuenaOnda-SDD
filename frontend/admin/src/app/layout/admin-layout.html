@@ -1,0 +1,19 @@
+<nav class="navbar navbar-expand navbar-dark bg-primary">
+  <c-container [fluid]="true">
+    <a class="navbar-brand" routerLink="/">
+      <i class="fa-solid fa-martini-glass-citrus me-2"></i>BuenaOndaSK
+    </a>
+    <ul class="navbar-nav me-auto">
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/catalog" routerLinkActive="active">
+          <i class="fa-solid fa-book-open me-1"></i>Catálogo
+        </a>
+      </li>
+    </ul>
+  </c-container>
+</nav>
+<main>
+  <c-container class="py-4">
+    <router-outlet />
+  </c-container>
+</main>

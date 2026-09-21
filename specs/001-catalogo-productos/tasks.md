@@ -37,11 +37,11 @@ Aplicación web según plan.md: `backend/` (solución .NET hexagonal) y `fronten
 
 **Purpose**: esqueleto del repositorio según plan.md
 
-- [ ] T001 Crear `backend/BuenaOndaSK.sln` y los proyectos `BuenaOnda.Domain`, `BuenaOnda.Application`, `BuenaOnda.Infrastructure` y `BuenaOnda.Api` sobre .NET 10 con referencias Application→Domain, Infrastructure→Application, Api→Application y Api→Infrastructure (esta última solo para el registro de dependencias); Domain NO DEBE referenciar ningún paquete ni proyecto externo (research R-1)
-- [ ] T002 [P] Crear los proyectos xUnit `backend/tests/BuenaOnda.Domain.Tests`, `backend/tests/BuenaOnda.Application.Tests` y `backend/tests/BuenaOnda.Api.IntegrationTests` y agregarlos a la solución
-- [ ] T003 [P] Agregar los paquetes Entity Framework Core y el proveedor Npgsql a `backend/src/BuenaOnda.Infrastructure/BuenaOnda.Infrastructure.csproj`, y las herramientas de diseño de EF Core al proyecto de arranque `backend/src/BuenaOnda.Api/BuenaOnda.Api.csproj`
-- [ ] T004 [P] Crear la aplicación Angular 22 en `frontend/admin` e instalar y configurar Bootstrap 5, CoreUI for Angular Free, el tema Bootswatch Minty y Font Awesome Free en `frontend/admin/src/styles.scss`
-- [ ] T005 [P] Definir la cadena de conexión a PostgreSQL 17 del contenedor `psql-17` en `backend/src/BuenaOnda.Api/appsettings.Development.json` sin credenciales versionadas (usar variable de entorno o user-secrets) y una base dedicada para pruebas de integración
+- [X] T001 Crear `backend/BuenaOndaSK.sln` y los proyectos `BuenaOnda.Domain`, `BuenaOnda.Application`, `BuenaOnda.Infrastructure` y `BuenaOnda.Api` sobre .NET 10 con referencias Application→Domain, Infrastructure→Application, Api→Application y Api→Infrastructure (esta última solo para el registro de dependencias); Domain NO DEBE referenciar ningún paquete ni proyecto externo (research R-1)
+- [X] T002 [P] Crear los proyectos xUnit `backend/tests/BuenaOnda.Domain.Tests`, `backend/tests/BuenaOnda.Application.Tests` y `backend/tests/BuenaOnda.Api.IntegrationTests` y agregarlos a la solución
+- [X] T003 [P] Agregar los paquetes Entity Framework Core y el proveedor Npgsql a `backend/src/BuenaOnda.Infrastructure/BuenaOnda.Infrastructure.csproj`, y las herramientas de diseño de EF Core al proyecto de arranque `backend/src/BuenaOnda.Api/BuenaOnda.Api.csproj`
+- [X] T004 [P] Crear la aplicación Angular 22 en `frontend/admin` e instalar y configurar Bootstrap 5, CoreUI for Angular Free, el tema Bootswatch Minty y Font Awesome Free en `frontend/admin/src/styles.scss`
+- [X] T005 [P] Definir la cadena de conexión a PostgreSQL 17 del contenedor `psql-17` en `backend/src/BuenaOnda.Api/appsettings.Development.json` sin credenciales versionadas (usar variable de entorno o user-secrets) y una base dedicada para pruebas de integración
 
 ---
 
@@ -49,12 +49,12 @@ Aplicación web según plan.md: `backend/` (solución .NET hexagonal) y `fronten
 
 **Purpose**: infraestructura común que DEBE completarse antes de cualquier historia
 
-- [ ] T006 [P] Crear en `DOM/NormalizedName.cs` la normalización de nombres (ignora mayúsculas y espacios de borde; los acentos siguen siendo significativos) y en `backend/src/BuenaOnda.Domain/Common/` las excepciones de dominio `ValidationException`, `NotFoundException` y `ConflictException`
-- [ ] T007 [P] Definir en `APP/Ports/` los puertos de salida `ICategoryRepository`, `IProductRepository` e `IUnitOfWork`
-- [ ] T008 Crear `INF/CatalogDbContext.cs` y el método de registro de servicios de Infrastructure en `backend/src/BuenaOnda.Infrastructure/DependencyInjection.cs` (depende de T003, T007)
-- [ ] T009 Configurar el arranque en `backend/src/BuenaOnda.Api/Program.cs`: composición de dependencias, prefijo de rutas `/api/admin/catalog` en `API/CatalogControllerBase.cs` y mapeo de excepciones de dominio a ProblemDetails (Validation→400, NotFound→404, Conflict→409) en `backend/src/BuenaOnda.Api/ProblemDetailsMapping.cs` (depende de T006, T008)
-- [ ] T010 [P] Crear el shell administrativo Angular: rutas, layout CoreUI, configuración de la URL base de la API y el módulo `catalog` vacío en `frontend/admin/src/app/app.routes.ts` y `FE/catalog.routes.ts` (depende de T004)
-- [ ] T011 [P] Crear el fixture de integración en `APIT/CatalogApiFixture.cs` que crea la base dedicada en `psql-17`, aplica las migraciones y ofrece un `HttpClient` de la API; debe permitir reemplazar servicios registrados, por ejemplo `IOptionReferenceChecker`, en pruebas (depende de T005, T009)
+- [X] T006 [P] Crear en `DOM/NormalizedName.cs` la normalización de nombres (ignora mayúsculas y espacios de borde; los acentos siguen siendo significativos) y en `backend/src/BuenaOnda.Domain/Common/` las excepciones de dominio `ValidationException`, `NotFoundException` y `ConflictException`
+- [X] T007 [P] Definir en `APP/Ports/` el puerto de salida `IUnitOfWork`; `ICategoryRepository` e `IProductRepository` se declaran junto a sus entidades en T015 y T025, porque dependen de ellas y de lo contrario este checkpoint no compilaría
+- [X] T008 Crear `INF/CatalogDbContext.cs` y el método de registro de servicios de Infrastructure en `backend/src/BuenaOnda.Infrastructure/DependencyInjection.cs` (depende de T003, T007)
+- [X] T009 Configurar el arranque en `backend/src/BuenaOnda.Api/Program.cs`: composición de dependencias, prefijo de rutas `/api/admin/catalog` en `API/CatalogControllerBase.cs` y mapeo de excepciones de dominio a ProblemDetails (Validation→400, NotFound→404, Conflict→409) en `backend/src/BuenaOnda.Api/ProblemDetailsMapping.cs` (depende de T006, T008)
+- [X] T010 [P] Crear el shell administrativo Angular: rutas, layout CoreUI, configuración de la URL base de la API y el módulo `catalog` vacío en `frontend/admin/src/app/app.routes.ts` y `FE/catalog.routes.ts` (depende de T004)
+- [X] T011 [P] Crear el fixture de integración en `APIT/CatalogApiFixture.cs` que crea la base dedicada en `psql-17`, aplica las migraciones y ofrece un `HttpClient` de la API; debe permitir reemplazar servicios registrados, por ejemplo `IOptionReferenceChecker`, en pruebas (depende de T005, T009)
 
 **Checkpoint**: la base está lista; se pueden implementar las historias.
 
@@ -68,19 +68,19 @@ Aplicación web según plan.md: `backend/` (solución .NET hexagonal) y `fronten
 
 ### Tests for User Story 1
 
-- [ ] T012 [P] [US1] Pruebas de dominio de `Category` en `DOMT/Catalog/CategoryTests.cs`: nombre obligatorio y no vacío, creación activa, modificación de nombre y descripción
-- [ ] T013 [P] [US1] Pruebas de integración en `APIT/Catalog/CategoriesApiTests.cs`: crear, listar, consultar, modificar, categoría sin productos consultable, nombre repetido con distinta capitalización → 409 (FR-020)
-- [ ] T014 [P] [US1] Pruebas de casos de uso de categorías con dobles de `ICategoryRepository` en `backend/tests/BuenaOnda.Application.Tests/Catalog/CategoryUseCasesTests.cs`
+- [X] T012 [P] [US1] Pruebas de dominio de `Category` en `DOMT/Catalog/CategoryTests.cs`: nombre obligatorio y no vacío, creación activa, modificación de nombre y descripción
+- [X] T013 [P] [US1] Pruebas de integración en `APIT/Catalog/CategoriesApiTests.cs`: crear, listar, consultar, modificar, categoría sin productos consultable, nombre repetido con distinta capitalización → 409 (FR-020)
+- [X] T014 [P] [US1] Pruebas de casos de uso de categorías con dobles de `ICategoryRepository` en `backend/tests/BuenaOnda.Application.Tests/Catalog/CategoryUseCasesTests.cs`
 
 ### Implementation for User Story 1
 
-- [ ] T015 [P] [US1] Crear la entidad `Category` en `DOM/Category.cs` con Id (GUID inmutable), Nombre ("Obligatorio, no vacío; único entre categorías (sin distinguir mayúsculas ni espacios de borde)"), Descripción (opcional) y Activa
-- [ ] T016 [US1] Crear los casos de uso `CreateCategory`, `UpdateCategory`, `GetCategory` y `ListCategories` (con `includeInactive`) en `APP/Categories/`, verificando la unicidad del nombre normalizado mediante `ICategoryRepository` (FR-001 a FR-003, FR-020) (depende de T015)
-- [ ] T017 [US1] Implementar la configuración EF Core `CategoryConfiguration` con índice único sobre el nombre normalizado y `CategoryRepository` en `INF/Categories/` (depende de T015, T008)
-- [ ] T018 [US1] Generar la migración inicial de categorías en `backend/src/BuenaOnda.Infrastructure/Migrations/` (depende de T017)
-- [ ] T019 [US1] Crear `API/CategoriesController.cs` y sus DTOs con `GET /categories`, `POST /categories`, `GET /categories/{id}` y `PUT /categories/{id}` según contracts/catalog-admin-api.md (depende de T016, T009)
-- [ ] T020 [P] [US1] Crear los modelos y el servicio HTTP de categorías en `FE/models/category.ts` y `FE/services/catalog-api.service.ts` (depende de T010)
-- [ ] T021 [US1] Crear las páginas de listado y formulario de categorías en `FE/pages/categories/` y sus rutas (depende de T020, T019)
+- [X] T015 [P] [US1] Crear la entidad `Category` y declarar el puerto `ICategoryRepository` en `APP/Ports/`; entidad `Category` en `DOM/Category.cs` con Id (GUID inmutable), Nombre ("Obligatorio, no vacío; único entre categorías (sin distinguir mayúsculas ni espacios de borde)"), Descripción (opcional) y Activa
+- [X] T016 [US1] Crear los casos de uso `CreateCategory`, `UpdateCategory`, `GetCategory` y `ListCategories` (con `includeInactive`) en `APP/Categories/`, verificando la unicidad del nombre normalizado mediante `ICategoryRepository` (FR-001 a FR-003, FR-020) (depende de T015)
+- [X] T017 [US1] Implementar la configuración EF Core `CategoryConfiguration` con índice único sobre el nombre normalizado y `CategoryRepository` en `INF/Categories/` (depende de T015, T008)
+- [X] T018 [US1] Generar la migración inicial de categorías en `backend/src/BuenaOnda.Infrastructure/Migrations/` (depende de T017)
+- [X] T019 [US1] Crear `API/CategoriesController.cs` y sus DTOs con `GET /categories`, `POST /categories`, `GET /categories/{id}` y `PUT /categories/{id}` según contracts/catalog-admin-api.md (depende de T016, T009)
+- [X] T020 [P] [US1] Crear los modelos y el servicio HTTP de categorías en `FE/models/category.ts` y `FE/services/catalog-api.service.ts` (depende de T010)
+- [X] T021 [US1] Crear las páginas de listado y formulario de categorías en `FE/pages/categories/` y sus rutas (depende de T020, T019)
 
 **Checkpoint**: la historia 1 funciona de forma independiente (MVP).
 
@@ -100,7 +100,7 @@ Aplicación web según plan.md: `backend/` (solución .NET hexagonal) y `fronten
 
 ### Implementation for User Story 2
 
-- [ ] T025 [P] [US2] Crear el agregado `Product` en `DOM/Product.cs` con Id (GUID inmutable), Nombre ("Obligatorio, no vacío; único dentro de su categoría"), Descripción (opcional), Imagen (URL opcional; "sin imagen el producto no es visible al público"), Categoría ("Obligatoria; debe estar activa al asignarla") y Activo
+- [ ] T025 [P] [US2] Declarar el puerto `IProductRepository` en `APP/Ports/` y crear el agregado `Product` en `DOM/Product.cs` con Id (GUID inmutable), Nombre ("Obligatorio, no vacío; único dentro de su categoría"), Descripción (opcional), Imagen (URL opcional; "sin imagen el producto no es visible al público"), Categoría ("Obligatoria; debe estar activa al asignarla") y Activo
 - [ ] T026 [US2] Crear `SellableOption` en `DOM/SellableOption.cs` con Id (GUID inmutable), Precio ("Obligatorio; decimal no negativo; moneda única del establecimiento"), Disponibilidad manual ("Obligatoria al crear la opción"), Descripción (opcional), Imagen (URL opcional; "informativa, no condiciona la visibilidad del producto") y Activa ("Se puede dar de baja y reactivar; solo se elimina definitivamente si nunca fue referenciada y no es la última opción del producto")
 - [ ] T027 [US2] Crear los casos de uso `CreateProduct` (sin características), `GetProduct`, `ListProducts` (por categoría e `includeInactive`) y `UpdateProduct` (nombre, descripción, imagen, categoría) en `APP/Products/`, más `ProductView` con `isAvailable` e `isVisibleToPublic` calculados para el producto y para cada opción (Disponibilidad efectiva = marca manual, opción activa, producto activo y categoría activa; visibilidad del producto = producto activo, categoría activa y con imagen; visibilidad de la opción = opción activa y visibilidad del producto) (FR-005, FR-006, FR-016) (depende de T025, T026)
 - [ ] T028 [US2] Implementar `ProductConfiguration` con índice único (categoría, nombre normalizado) y `ProductRepository` en `INF/Products/` (depende de T025, T026, T017)
