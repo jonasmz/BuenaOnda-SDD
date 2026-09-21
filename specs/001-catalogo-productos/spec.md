@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-21
 
-**Status**: Draft (revisada el 2026-09-21: catálogo plano, sin variantes; constitución v2.0.0)
+**Status**: Implementada (2026-09-21; catálogo plano, sin variantes; constitución v2.0.0)
 
 **Input**: Feature "001 — Gestión del catálogo de productos": permitir que un usuario administrativo autorizado gestione la definición comercial del catálogo (categorías, productos, información comercial y precios). Cada tamaño, presentación, sabor o variedad que se vende por separado es un producto distinto; el catálogo no tiene variantes.
 
