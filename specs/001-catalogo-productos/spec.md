@@ -29,6 +29,11 @@ Conceptos funcionales usados en este documento:
 - Q: ¿Cómo se retira un producto o categoría del catálogo? → A: Solo baja/desactivación reversible; no hay eliminación definitiva.
 - Q: ¿Puede existir un producto sin variantes? → A: Sí, con su propio precio.
 - Q: Al dar de baja un producto o variante, ¿qué pasa con su uso en el resto del sistema? → A: Se conserva y las referencias existentes siguen válidas; no se puede seleccionar para nuevos usos.
+- Q: ¿Qué significa que un producto esté "disponible" y a qué nivel se marca? → A: Marca manual del usuario administrativo, por cada opción comercializable; no se deriva del inventario en esta feature.
+- Q: ¿Un producto o categoría dado de baja queda automáticamente no disponible y no visible al público? → A: Sí; la baja implica no disponible y no visible, y es un dato aparte de la marca manual de disponibilidad de cada opción.
+- Q: ¿Se permiten nombres repetidos de categorías o de productos? → A: No; nombre único entre categorías y nombre de producto único dentro de su categoría.
+- Q: ¿Se puede registrar un producto sin imagen? → A: Sí, la imagen es opcional al registrar, pero es obligatoria para ofrecerlo públicamente (sin imagen no es visible al público).
+- Q: Además de precio y disponibilidad, ¿puede una opción tener información comercial propia? → A: Sí, cada opción puede tener su propia descripción e imagen opcionales.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -60,7 +65,7 @@ Un usuario administrativo autorizado registra un producto con su información co
 
 1. **Given** una categoría existente, **When** el usuario registra un producto asociado a ella con su información comercial, **Then** el producto aparece en el catálogo con esa información.
 2. **Given** un producto existente, **When** el usuario modifica su información comercial, **Then** la consulta muestra los valores actualizados.
-3. **Given** un producto sin imagen, **When** el usuario lo consulta, **Then** el comportamiento respeta lo que se defina en la aclaración de imagen (ver Cuestiones pendientes).
+3. **Given** un producto sin imagen, **When** el usuario lo registra o consulta, **Then** el producto se acepta y se identifica como sin imagen, y no es visible al público hasta que se le asigne una.
 
 ---
 
@@ -130,14 +135,14 @@ Cada caso indica lo que esta especificación establece o la aclaración pendient
 - **Producto sin variantes**: es válido; tiene su propio precio y es seleccionable sin ambigüedad (FR-008).
 - **Producto con una sola variante**: el producto DEBE seguir siendo consultable y seleccionable sin ambigüedad.
 - **Producto con múltiples características de variación**: DEBE ser posible (aguas saborizadas).
-- **Dos variantes funcionalmente indistinguibles** de un mismo producto: el sistema NO DEBE permitir que una opción comercializable resulte ambigua respecto de otra del mismo producto (FR-011); los detalles de unicidad están pendientes (Cuestión 8).
+- **Dos variantes funcionalmente indistinguibles** de un mismo producto: el sistema NO DEBE permitir que una opción comercializable resulte ambigua respecto de otra del mismo producto (FR-011); la unicidad de nombres de categorías y productos se define en FR-004a.
 - **Categoría sin productos**: DEBE ser válida y consultable.
 - **Cambio de categoría de un producto / modificación de una categoría**: la modificación de la categoría NO DEBE romper la asociación de sus productos.
 - **Modificación de una variante existente**: pendiente en lo relativo a referencias existentes (Cuestión 7, parte de modificación).
-- **Producto sin imagen**: pendiente (Cuestión 9).
-- **Disponibilidad no determinada todavía**: pendiente (Cuestión 4).
+- **Producto sin imagen**: se puede registrar y consultar en la administración, pero no es visible al público hasta que tenga imagen (FR-016).
+- **Disponibilidad**: se marca manualmente por opción (FR-015); la baja implica no disponible y no visible al público (FR-018).
 - **Modificaciones de precio**: no se define historial; el precio consultado es el vigente (ver Precio).
-- **Nombres repetidos** de categorías, productos u opciones: pendiente (Cuestión 8).
+- **Nombres repetidos**: categorías y productos se rigen por FR-004a; las opciones y características se rigen por FR-011; queda pendiente si se comparan también acentos.
 - **Retiro o baja** de categorías o productos que otras funcionalidades puedan referenciar: la baja es reversible, no hay eliminación definitiva y las referencias existentes siguen válidas sin nuevos usos (FR-018).
 
 ## Requirements *(mandatory)*
@@ -150,10 +155,11 @@ Cada caso indica lo que esta especificación establece o la aclaración pendient
 - **FR-002**: El usuario administrativo autorizado DEBE poder consultar las categorías existentes.
 - **FR-003**: El usuario administrativo autorizado DEBE poder modificar la información de una categoría.
 - **FR-004**: Todo producto DEBE pertenecer a exactamente una categoría.
+- **FR-004a**: El nombre de una categoría DEBE ser único entre categorías, y el nombre de un producto DEBE ser único dentro de su categoría, sin distinguir mayúsculas ni espacios de borde.
 
 **Productos**
 
-- **FR-005**: El usuario administrativo autorizado DEBE poder registrar productos con su información comercial: nombre, categoría, descripción, imagen ilustrativa, información de precio y disponibilidad para otras funcionalidades.
+- **FR-005**: El usuario administrativo autorizado DEBE poder registrar productos con su información comercial: nombre, categoría, descripción, imagen ilustrativa, información de precio; la disponibilidad se marca por opción (FR-015).
 - **FR-006**: El usuario administrativo autorizado DEBE poder consultar y modificar la información comercial de un producto.
 - **FR-007**: El catálogo NO DEBE exigir que todos los productos compartan los mismos campos adicionales ni la misma estructura de variación.
 
@@ -163,7 +169,7 @@ Cada caso indica lo que esta especificación establece o la aclaración pendient
 - **FR-009**: Cada producto DEBE poder definir sus propias características de variación; el catálogo NO DEBE limitarlas a un conjunto global cerrado ni codificar valores como tamaños, presentaciones, sabores o modalidades.
 - **FR-010**: Una opción comercializable DEBE poder identificarse por más de una característica de variación a la vez (por ejemplo presentación y sabor).
 - **FR-011**: El usuario administrativo autorizado DEBE poder consultar de forma inequívoca qué opciones comercializables tiene un producto, y dos opciones del mismo producto NO DEBEN resultar funcionalmente indistinguibles.
-- **FR-012**: El usuario administrativo autorizado DEBE poder modificar la información comercial de una opción comercializable existente.
+- **FR-012**: El usuario administrativo autorizado DEBE poder modificar la información comercial de una opción comercializable existente. Además de sus valores de variación, precio y disponibilidad, una opción PUEDE tener su propia descripción e imagen ilustrativa, ambas opcionales. La regla de visibilidad pública por imagen (FR-016) se evalúa sobre la imagen del producto.
 
 **Precio**
 
@@ -172,8 +178,8 @@ Cada caso indica lo que esta especificación establece o la aclaración pendient
 
 **Disponibilidad e imagen**
 
-- **FR-015**: El catálogo DEBE poder expresar la información de disponibilidad que necesiten sus consumidores. La fuente y las reglas que la determinan NO se definen en esta feature.
-- **FR-016**: Un producto DEBE poder tener información de imagen ilustrativa para su presentación pública posterior.
+- **FR-015**: El usuario administrativo autorizado DEBE poder marcar manualmente cada opción comercializable como disponible o no disponible, y el catálogo DEBE exponer ese dato a sus consumidores. Un producto se considera no disponible cuando ninguna de sus opciones lo está. Esta feature NO deriva la disponibilidad del inventario; cualquier vinculación futura con el inventario se define en su propia especificación.
+- **FR-016**: Un producto DEBE poder tener información de imagen ilustrativa para su presentación pública posterior. La imagen es opcional al registrar el producto, pero un producto sin imagen NO DEBE ser visible al público; el catálogo DEBE permitir saber si un producto tiene imagen.
 
 **Extensibilidad**
 
@@ -181,15 +187,15 @@ Cada caso indica lo que esta especificación establece o la aclaración pendient
 
 **Retiro del catálogo y consumo**
 
-- **FR-018**: El usuario administrativo autorizado DEBE poder dar de baja (desactivar) categorías y productos del catálogo de forma reversible, es decir, poder reactivarlos. El catálogo NO DEBE permitir su eliminación definitiva. Un elemento dado de baja DEBE conservar su información y las referencias existentes hacia él DEBEN seguir siendo válidas, pero NO DEBE poder seleccionarse para nuevos usos. Su efecto sobre la disponibilidad para venta y la visibilidad pública se define en la cuestión 5.
+- **FR-018**: El usuario administrativo autorizado DEBE poder dar de baja (desactivar) categorías y productos del catálogo de forma reversible, es decir, poder reactivarlos. El catálogo NO DEBE permitir su eliminación definitiva. Un elemento dado de baja DEBE conservar su información y las referencias existentes hacia él DEBEN seguir siendo válidas, pero NO DEBE poder seleccionarse para nuevos usos. La baja de un producto o categoría implica que sus opciones no están disponibles para venta y que no son visibles al público; la baja es un dato distinto de la marca manual de disponibilidad de cada opción (FR-015), que no se modifica por la baja ni por la reactivación.
 - **FR-019**: Las funcionalidades consumidoras (POS, recetas, inventario, catálogo público) DEBEN poder seleccionar inequívocamente un producto o una opción comercializable del catálogo.
 
 ### Key Entities *(include if feature involves data)*
 
 - **Categoría**: agrupación de productos, con información propia modificable.
-- **Producto**: bien comercializado, con información comercial (nombre, descripción, imagen ilustrativa, información de precio, disponibilidad) y relación con su categoría.
+- **Producto**: bien comercializado, con información comercial (nombre, descripción, imagen ilustrativa, información de precio) y relación con su categoría; su disponibilidad resulta de la de sus opciones.
 - **Característica de variación**: eje de variación definido por producto (por ejemplo presentación o sabor).
-- **Opción comercializable (variante)**: alternativa de venta de un producto, identificada por valores de sus características de variación, con precio determinable.
+- **Opción comercializable (variante)**: alternativa de venta de un producto, identificada por valores de sus características de variación, con precio determinable, marca manual de disponibilidad y, opcionalmente, descripción e imagen propias.
 
 ### Requisitos no funcionales
 
@@ -216,18 +222,18 @@ Cada caso indica lo que esta especificación establece o la aclaración pendient
 
 ## Cuestiones pendientes para `/speckit.clarify`
 
-Las cuestiones 1, 2, 3 y 6 ya están resueltas (ver Clarifications). Ya no quedan marcadores `[NEEDS CLARIFICATION]`. Las demás se derivan de los casos límite y NO se resuelven por suposición.
+Las cuestiones 1 a 6 y 8 a 10 ya están resueltas (ver Clarifications). Ya no quedan marcadores `[NEEDS CLARIFICATION]`. Solo queda abierta la parte de la cuestión 7 sobre modificar una variante y las referencias existentes.
 
 1. ~~¿Un producto puede pertenecer a una sola categoría o a varias?~~ Resuelta: exactamente una (FR-004).
 2. ~~¿Cómo se determina el precio cuando existen variantes?~~ Resuelta: cada variante tiene su propio precio (FR-013).
 3. ~~¿Puede existir un producto sin variantes?~~ Resuelta: sí, con su propio precio (FR-008).
-4. ¿Qué significa funcionalmente que un producto esté "disponible"?
-5. ¿Existe diferencia entre producto activo, disponible para venta y visible públicamente?
+4. ~~¿Qué significa funcionalmente que un producto esté "disponible"?~~ Resuelta: marca manual por opción (FR-015).
+5. ~~¿Existe diferencia entre producto activo, disponible para venta y visible públicamente?~~ Resuelta: la baja implica no disponible y no visible; la marca manual de disponibilidad es aparte (FR-018).
 6. ~~¿Cómo se retira un producto o categoría?~~ Resuelta: solo baja/desactivación reversible, sin eliminación definitiva (FR-018).
 7. ~~¿Qué ocurre con las referencias existentes al retirar un producto o variante?~~ Resuelta para la baja: se conservan y siguen válidas, sin nuevos usos (FR-018). Sigue pendiente el efecto de modificar una variante sobre referencias existentes.
-8. ¿Qué reglas de unicidad existen para categorías, productos, características y opciones de variantes?
-9. ¿La imagen es obligatoria o puede faltar?
-10. ¿Las variantes pueden cambiar individualmente información comercial además del precio, y cuál?
+8. ~~¿Qué reglas de unicidad existen?~~ Resuelta: nombres de categoría únicos; nombres de producto únicos dentro de su categoría (FR-004a); características y opciones distinguibles dentro de su producto (FR-011).
+9. ~~¿La imagen es obligatoria o puede faltar?~~ Resuelta: opcional al registrar; obligatoria para que el producto sea visible al público (FR-016).
+10. ~~¿Las variantes pueden cambiar individualmente información comercial además del precio?~~ Resuelta: sí, descripción e imagen opcionales por opción (FR-012).
 
 ## Fuera de alcance
 
