@@ -4,23 +4,34 @@ using BuenaOnda.Domain.Common;
 
 namespace BuenaOnda.Application.Catalog.Products;
 
+public sealed record CharacteristicView(Guid Id, string Name);
+
 public sealed record OptionView(
-    Guid Id, decimal Price, string? Description, string? ImageUrl,
+    Guid Id, IReadOnlyDictionary<string, string> Values, decimal Price, string? Description, string? ImageUrl,
     bool IsMarkedAvailable, bool IsActive, bool IsAvailable, bool IsVisibleToPublic);
 
 public sealed record ProductView(
     Guid Id, string Name, string? Description, string? ImageUrl, bool HasImage, Guid CategoryId, bool IsActive,
-    bool IsAvailable, bool IsVisibleToPublic, IReadOnlyList<OptionView> Options)
+    bool IsAvailable, bool IsVisibleToPublic, IReadOnlyList<CharacteristicView> Characteristics,
+    IReadOnlyList<OptionView> Options)
 {
     public static ProductView From(Product product, Category category) => new(
         product.Id, product.Name, product.Description, product.ImageUrl, product.HasImage, product.CategoryId,
         product.IsActive, product.IsAvailable(category), product.IsVisibleToPublic(category),
+        product.Characteristics.Select(c => new CharacteristicView(c.Id, c.Name)).ToList(),
         product.Options.Select(o => new OptionView(
-            o.Id, o.Price, o.Description, o.ImageUrl, o.IsMarkedAvailable, o.IsActive,
+            o.Id, ValuesByName(product, o), o.Price, o.Description, o.ImageUrl, o.IsMarkedAvailable, o.IsActive,
             o.IsAvailable(product, category), o.IsVisibleToPublic(product, category))).ToList());
+
+    private static Dictionary<string, string> ValuesByName(Product product, SellableOption option) =>
+        product.Characteristics.ToDictionary(c => c.Name, c => option.Values.First(v => v.CharacteristicId == c.Id).Value);
 }
 
-public sealed record OptionInput(decimal? Price, bool? IsMarkedAvailable, string? Description, string? ImageUrl);
+public sealed record OptionInput(
+    IReadOnlyDictionary<string, string>? Values, decimal? Price, bool? IsMarkedAvailable, string? Description, string? ImageUrl)
+{
+    internal OptionDraft ToDraft() => new(Values, Price, IsMarkedAvailable, Description, ImageUrl);
+}
 
 internal static class CategoryLookup
 {
@@ -39,17 +50,13 @@ internal static class CategoryLookup
 public sealed class CreateProduct(IProductRepository products, ICategoryRepository categories, IUnitOfWork unitOfWork)
 {
     public async Task<ProductView> ExecuteAsync(
-        string? name, string? description, string? imageUrl, Guid? categoryId, OptionInput? option,
+        string? name, string? description, string? imageUrl, Guid? categoryId,
+        IReadOnlyList<string>? characteristics, IReadOnlyList<OptionInput>? options,
         CancellationToken cancellationToken = default)
     {
         var category = await CategoryLookup.RequireAsync(categories, categoryId, cancellationToken);
-        if (option is null)
-        {
-            throw new ValidationException("El producto necesita una opción con su precio.");
-        }
-
         var product = Product.Create(
-            name, description, imageUrl, category, option.Price, option.IsMarkedAvailable, option.Description, option.ImageUrl);
+            name, description, imageUrl, category, characteristics, options?.Select(o => o.ToDraft()).ToList());
         if (await products.ExistsWithNormalizedNameInCategoryAsync(product.NormalizedName, category.Id, null, cancellationToken))
         {
             throw new ConflictException($"Ya existe un producto llamado '{product.Name}' en la categoría.");
@@ -108,4 +115,45 @@ public sealed class ListProducts(IProductRepository products, ICategoryRepositor
             .Select(p => ProductView.From(p, byId[p.CategoryId]))
             .ToList();
     }
+}
+
+/// <summary>Base de los casos de uso que modifican la estructura de un producto ya existente.</summary>
+public abstract class ProductStructureUseCase(IProductRepository products, ICategoryRepository categories, IUnitOfWork unitOfWork)
+{
+    protected async Task<ProductView> ApplyAsync(
+        Guid productId, Action<Product, Category> change, CancellationToken cancellationToken)
+    {
+        var product = await products.GetByIdAsync(productId, cancellationToken)
+            ?? throw new NotFoundException($"No existe el producto {productId}.");
+        var category = await categories.GetByIdAsync(product.CategoryId, cancellationToken)
+            ?? throw new NotFoundException($"No existe la categoría {product.CategoryId}.");
+
+        change(product, category);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return ProductView.From(product, category);
+    }
+}
+
+public sealed class AddOption(IProductRepository products, ICategoryRepository categories, IUnitOfWork unitOfWork)
+    : ProductStructureUseCase(products, categories, unitOfWork)
+{
+    public Task<ProductView> ExecuteAsync(Guid productId, OptionInput input, CancellationToken cancellationToken = default) =>
+        ApplyAsync(productId, (product, category) => product.AddOption(input.ToDraft(), category), cancellationToken);
+}
+
+public sealed class AddCharacteristic(IProductRepository products, ICategoryRepository categories, IUnitOfWork unitOfWork)
+    : ProductStructureUseCase(products, categories, unitOfWork)
+{
+    public Task<ProductView> ExecuteAsync(
+        Guid productId, string? name, IReadOnlyDictionary<Guid, string>? valuesForExistingOptions,
+        CancellationToken cancellationToken = default) =>
+        ApplyAsync(
+            productId, (product, category) => product.AddCharacteristic(name, valuesForExistingOptions, category), cancellationToken);
+}
+
+public sealed class RemoveCharacteristic(IProductRepository products, ICategoryRepository categories, IUnitOfWork unitOfWork)
+    : ProductStructureUseCase(products, categories, unitOfWork)
+{
+    public Task<ProductView> ExecuteAsync(Guid productId, Guid characteristicId, CancellationToken cancellationToken = default) =>
+        ApplyAsync(productId, (product, category) => product.RemoveCharacteristic(characteristicId, category), cancellationToken);
 }

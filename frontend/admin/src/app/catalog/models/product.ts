@@ -1,5 +1,11 @@
+export interface Characteristic {
+  id: string;
+  name: string;
+}
+
 export interface SellableOption {
   id: string;
+  values: Record<string, string>;
   price: number;
   description: string | null;
   imageUrl: string | null;
@@ -19,10 +25,12 @@ export interface Product {
   isActive: boolean;
   isAvailable: boolean;
   isVisibleToPublic: boolean;
+  characteristics: Characteristic[];
   options: SellableOption[];
 }
 
 export interface OptionInput {
+  values: Record<string, string>;
   price: number;
   isMarkedAvailable: boolean;
   description: string | null;
@@ -34,6 +42,7 @@ export interface CreateProductInput {
   description: string | null;
   imageUrl: string | null;
   categoryId: string;
+  characteristics: string[];
   options: OptionInput[];
 }
 

@@ -5,11 +5,19 @@ namespace BuenaOnda.Domain.Catalog;
 /// <summary>Opción comercializable de un producto: lo que realmente se vende, con su precio propio.</summary>
 public sealed class SellableOption
 {
+    private readonly List<OptionValue> _values = [];
+
     private SellableOption()
     {
+        Signature = string.Empty;
     }
 
     public Guid Id { get; private set; }
+
+    public IReadOnlyList<OptionValue> Values => _values;
+
+    /// <summary>Huella normalizada de los valores; distingue una opción de otra dentro del producto (FR-011).</summary>
+    public string Signature { get; private set; }
 
     public decimal Price { get; private set; }
 
@@ -23,14 +31,41 @@ public sealed class SellableOption
     /// <summary>Imagen propia, informativa: no condiciona la visibilidad del producto.</summary>
     public string? ImageUrl { get; private set; }
 
-    internal static SellableOption Create(decimal? price, bool? isMarkedAvailable, string? description, string? imageUrl)
+    internal static SellableOption Create(IEnumerable<OptionValue> values, IReadOnlyList<VariationCharacteristic> characteristics, decimal? price, bool? isMarkedAvailable, string? description, string? imageUrl)
     {
         var option = new SellableOption { Id = Guid.NewGuid(), IsActive = true };
         option.IsMarkedAvailable = isMarkedAvailable
             ?? throw new ValidationException("La disponibilidad de la opción es obligatoria.");
         option.Update(price, description, imageUrl);
+        option.SetValues(values, characteristics);
         return option;
     }
+
+    /// <summary>Reemplaza los valores y recalcula la huella con las características vigentes del producto.</summary>
+    internal void SetValues(IEnumerable<OptionValue> values, IReadOnlyList<VariationCharacteristic> characteristics)
+    {
+        _values.Clear();
+        _values.AddRange(values);
+        Resign(characteristics);
+    }
+
+    internal void Resign(IReadOnlyList<VariationCharacteristic> characteristics) =>
+        Signature = ComputeSignature(characteristics);
+
+    /// <summary>Huella que tendría la opción sin la característica indicada, sin modificarla.</summary>
+    internal string SignatureWithout(IReadOnlyList<VariationCharacteristic> characteristics, Guid characteristicId) =>
+        ComputeSignature(characteristics.Where(c => c.Id != characteristicId).ToList());
+
+    private string ComputeSignature(IEnumerable<VariationCharacteristic> characteristics) =>
+        string.Join(
+            '\u001f',
+            characteristics
+                .OrderBy(c => c.NormalizedName, StringComparer.Ordinal)
+                .Select(c => $"{c.NormalizedName}={_values.First(v => v.CharacteristicId == c.Id).NormalizedValue}"));
+
+    internal void DropValue(Guid characteristicId) => _values.RemoveAll(v => v.CharacteristicId == characteristicId);
+
+    internal void AddValue(OptionValue value) => _values.Add(value);
 
     internal void Update(decimal? price, string? description, string? imageUrl)
     {

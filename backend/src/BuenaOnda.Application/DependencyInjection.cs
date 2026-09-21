@@ -17,6 +17,9 @@ public static class DependencyInjection
         services.AddScoped<UpdateProduct>();
         services.AddScoped<GetProduct>();
         services.AddScoped<ListProducts>();
+        services.AddScoped<AddOption>();
+        services.AddScoped<AddCharacteristic>();
+        services.AddScoped<RemoveCharacteristic>();
         return services;
     }
 }

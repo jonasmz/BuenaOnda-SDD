@@ -121,20 +121,20 @@ Aplicación web según plan.md: `backend/` (solución .NET hexagonal) y `fronten
 
 ### Tests for User Story 3
 
-- [ ] T033 [P] [US3] Pruebas de dominio en `DOMT/Catalog/ProductVariationTests.cs`: escenarios 1 a 5, opción indistinguible rechazada (invariante 3), característica repetida rechazada (invariante 4), valores incompletos o de más rechazados (invariante 2), agregar y quitar característica (invariante 5), producto con una sola opción consultable y seleccionable
-- [ ] T034 [P] [US3] Pruebas del servicio HTTP y del editor de variación en `frontend/admin/src/app/catalog/components/variation-editor/variation-editor.spec.ts`
-- [ ] T035 [P] [US3] Pruebas de integración en `APIT/Catalog/ProductVariationApiTests.cs`: creación con características y opciones, agregar opción, agregar y quitar característica, duplicado → 409, 500 ml/750 ml/1 litro/1,5 litros más una presentación nueva
+- [X] T033 [P] [US3] Pruebas de dominio en `DOMT/Catalog/ProductVariationTests.cs`: escenarios 1 a 5, opción indistinguible rechazada (invariante 3), característica repetida rechazada (invariante 4), valores incompletos o de más rechazados (invariante 2), agregar y quitar característica (invariante 5), producto con una sola opción consultable y seleccionable
+- [X] T034 [P] [US3] Pruebas del servicio HTTP y del editor de variación en `frontend/admin/src/app/catalog/components/variation-editor/variation-editor.spec.ts`
+- [X] T035 [P] [US3] Pruebas de integración en `APIT/Catalog/ProductVariationApiTests.cs`: creación con características y opciones, agregar opción, agregar y quitar característica, duplicado → 409, 500 ml/750 ml/1 litro/1,5 litros más una presentación nueva
 
 ### Implementation for User Story 3
 
-- [ ] T036 [P] [US3] Crear `VariationCharacteristic` en `DOM/VariationCharacteristic.cs` con Nombre ("Único dentro del producto, sin distinguir mayúsculas ni espacios de borde") y el cálculo de la firma normalizada de valores de una opción en `DOM/OptionSignature.cs`
-- [ ] T037 [US3] Extender `Product` en `DOM/Product.cs` con la creación con características y opciones, `AddOption`, `AddCharacteristic` (aportando el valor para cada opción existente) y `RemoveCharacteristic` (solo si las opciones siguen distinguibles), garantizando los invariantes 1 a 5 (depende de T036)
-- [ ] T038 [US3] Crear los casos de uso `AddOption`, `AddCharacteristic` y `RemoveCharacteristic` en `APP/Products/` y extender `CreateProduct` para aceptar características y opciones (FR-008 a FR-011) (depende de T037)
-- [ ] T039 [US3] Mapear características y valores de opción en `INF/Products/` con índice único (producto, firma normalizada) para reforzar FR-011 (depende de T037, T028)
-- [ ] T040 [US3] Generar la migración de variación en `backend/src/BuenaOnda.Infrastructure/Migrations/` (depende de T039)
-- [ ] T041 [US3] Extender `API/ProductsController.cs` con `POST /products/{id}/options`, `POST /products/{id}/characteristics` y `DELETE /products/{id}/characteristics/{characteristicId}`, y aceptar `characteristics` y `options` en `POST /products` (depende de T038)
-- [ ] T042 [P] [US3] Crear el componente editor de variación en `FE/components/variation-editor/` (características dinámicas y matriz de opciones con precio y marca de disponibilidad) (depende de T031)
-- [ ] T043 [US3] Integrar el editor de variación en el formulario y en la vista de detalle de producto de `FE/pages/products/` mostrando sin ambigüedad todas las opciones (depende de T042, T041)
+- [X] T036 [P] [US3] Crear `VariationCharacteristic` en `DOM/VariationCharacteristic.cs` con Nombre ("Único dentro del producto, sin distinguir mayúsculas ni espacios de borde") y el cálculo de la firma normalizada de valores de una opción en `DOM/OptionSignature.cs`
+- [X] T037 [US3] Extender `Product` en `DOM/Product.cs` con la creación con características y opciones, `AddOption`, `AddCharacteristic` (aportando el valor para cada opción existente) y `RemoveCharacteristic` (solo si las opciones siguen distinguibles), garantizando los invariantes 1 a 5 (depende de T036)
+- [X] T038 [US3] Crear los casos de uso `AddOption`, `AddCharacteristic` y `RemoveCharacteristic` en `APP/Products/` y extender `CreateProduct` para aceptar características y opciones (FR-008 a FR-011) (depende de T037)
+- [X] T039 [US3] Mapear características y valores de opción en `INF/Products/` con índice único (producto, firma normalizada) para reforzar FR-011 (depende de T037, T028)
+- [X] T040 [US3] Generar la migración de variación en `backend/src/BuenaOnda.Infrastructure/Migrations/` (depende de T039)
+- [X] T041 [US3] Extender `API/ProductsController.cs` con `POST /products/{id}/options`, `POST /products/{id}/characteristics` y `DELETE /products/{id}/characteristics/{characteristicId}`, y aceptar `characteristics` y `options` en `POST /products` (depende de T038)
+- [X] T042 [P] [US3] Crear el componente editor de variación en `FE/components/variation-editor/` (características dinámicas y matriz de opciones con precio y marca de disponibilidad) (depende de T031)
+- [X] T043 [US3] Integrar el editor de variación en el formulario y en la vista de detalle de producto de `FE/pages/products/` mostrando sin ambigüedad todas las opciones (depende de T042, T041)
 
 **Checkpoint**: las historias 1 a 3 funcionan; los productos actuales ya se pueden representar.
 

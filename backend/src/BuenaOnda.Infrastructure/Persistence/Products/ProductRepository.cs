@@ -7,12 +7,13 @@ namespace BuenaOnda.Infrastructure.Persistence.Products;
 internal sealed class ProductRepository(CatalogDbContext dbContext) : IProductRepository
 {
     public Task<Product?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        dbContext.Set<Product>().Include(p => p.Options).FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        dbContext.Set<Product>().Include(p => p.Options).Include(p => p.Characteristics).FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<Product>> ListAsync(Guid? categoryId, bool includeInactive, CancellationToken cancellationToken = default) =>
         await dbContext.Set<Product>()
             .AsNoTracking()
             .Include(p => p.Options)
+            .Include(p => p.Characteristics)
             .Where(p => (categoryId == null || p.CategoryId == categoryId) && (includeInactive || p.IsActive))
             .OrderBy(p => p.NormalizedName)
             .ToListAsync(cancellationToken);
