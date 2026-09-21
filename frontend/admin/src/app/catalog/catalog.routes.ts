@@ -11,4 +11,12 @@ export const CATALOG_ROUTES: Routes = [
       { path: ':id/edit', loadComponent: () => import('./pages/categories/category-form').then((m) => m.CategoryForm) },
     ],
   },
+  {
+    path: 'products',
+    children: [
+      { path: '', loadComponent: () => import('./pages/products/product-list').then((m) => m.ProductList) },
+      { path: 'new', loadComponent: () => import('./pages/products/product-form').then((m) => m.ProductForm) },
+      { path: ':id/edit', loadComponent: () => import('./pages/products/product-form').then((m) => m.ProductForm) },
+    ],
+  },
 ];

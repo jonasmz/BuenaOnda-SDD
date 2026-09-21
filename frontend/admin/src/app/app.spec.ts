@@ -16,11 +16,12 @@ describe('App', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render the administrative layout with the catalog link', async () => {
+  it('should render the administrative layout with the catalog links', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.navbar-brand')?.textContent).toContain('BuenaOndaSK');
-    expect(compiled.querySelector('a[href="/catalog"]')?.textContent).toContain('Catálogo');
+    expect(compiled.querySelector('a[href="/catalog/categories"]')?.textContent).toContain('Categorías');
+    expect(compiled.querySelector('a[href="/catalog/products"]')?.textContent).toContain('Productos');
   });
 });

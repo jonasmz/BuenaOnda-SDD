@@ -1,6 +1,7 @@
 using BuenaOnda.Application.Catalog.Ports;
 using BuenaOnda.Infrastructure.Persistence;
 using BuenaOnda.Infrastructure.Persistence.Categories;
+using BuenaOnda.Infrastructure.Persistence.Products;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,6 +15,7 @@ public static class DependencyInjection
         services.AddDbContext<CatalogDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
         return services;
     }
 }

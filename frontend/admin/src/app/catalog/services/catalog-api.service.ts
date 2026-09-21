@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CATALOG_API_URL } from '../../core/api-config';
 import { Category, CategoryInput } from '../models/category';
+import { CreateProductInput, Product, UpdateProductInput } from '../models/product';
 
 /** Cliente HTTP de la API administrativa del catálogo (contracts/catalog-admin-api.md). */
 @Injectable({ providedIn: 'root' })
@@ -25,5 +26,25 @@ export class CatalogApiService {
 
   updateCategory(id: string, input: CategoryInput): Observable<Category> {
     return this.http.put<Category>(`${this.baseUrl}/categories/${id}`, input);
+  }
+
+  listProducts(categoryId?: string, includeInactive = false): Observable<Product[]> {
+    let params = new HttpParams().set('includeInactive', includeInactive);
+    if (categoryId) {
+      params = params.set('categoryId', categoryId);
+    }
+    return this.http.get<Product[]>(`${this.baseUrl}/products`, { params });
+  }
+
+  getProduct(id: string): Observable<Product> {
+    return this.http.get<Product>(`${this.baseUrl}/products/${id}`);
+  }
+
+  createProduct(input: CreateProductInput): Observable<Product> {
+    return this.http.post<Product>(`${this.baseUrl}/products`, input);
+  }
+
+  updateProduct(id: string, input: UpdateProductInput): Observable<Product> {
+    return this.http.put<Product>(`${this.baseUrl}/products/${id}`, input);
   }
 }
