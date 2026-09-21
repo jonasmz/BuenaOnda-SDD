@@ -99,3 +99,9 @@ frontend/
 | Violación / Riesgo | Por qué se acepta | Alternativa más simple descartada |
 |--------------------|-------------------|-----------------------------------|
 | Excepción transitoria del Principio IV: los endpoints administrativos se implementan sin autenticación ni autorización | Autorizada por la constitución v1.2.0 hasta que se implemente la feature de usuarios y roles. Los requerimientos y la spec excluyen autenticación y roles; implementarla aquí decidiría roles y permisos por suposición | Autenticación provisional: descartada por introducir decisiones reservadas a usuarios y roles. Condiciones: (a) rutas agrupadas bajo `/api/admin/catalog`; (b) sin despliegue ni exposición fuera del entorno de desarrollo; (c) cierre al implementarse usuarios y roles, antes de cualquier entorno accesible por terceros |
+
+### Verificación de las condiciones de la excepción (T042, 2026-09-21)
+
+- **(a) Prefijo único**: cumple. Las 13 acciones HTTP de la API cuelgan de `api/admin/catalog/[controller]` (`CatalogControllerBase`). La única ruta adicional es `MapOpenApi`, la descripción de la API, que se expone solo en el entorno de desarrollo y no es un endpoint del catálogo.
+- **(b) Sin despliegue ni exposición fuera del desarrollo**: cumple con una salvedad. No existen `Dockerfile`, canalizaciones de CI, manifiestos de Kubernetes, perfiles de publicación ni infraestructura como código; el único artefacto es `docker-compose.yml`, de desarrollo (`dotnet watch` y `ng serve`). Salvedad: publica los puertos `1806` y `8855` en todas las interfaces del equipo, por lo que en una red compartida la API sin autenticación sería alcanzable por terceros; se recomienda publicarlos solo en `127.0.0.1` mientras no exista autenticación.
+- **(c) Cierre**: pendiente. La excepción sigue vigente: no hay `Authorize`, autenticación ni Identity en el backend. Se cierra al implementarse la feature de usuarios y roles, antes de cualquier entorno accesible por terceros.

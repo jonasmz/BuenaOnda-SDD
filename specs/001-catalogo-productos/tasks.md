@@ -152,8 +152,8 @@ Aplicación web según plan.md: `backend/` (solución .NET hexagonal) y `fronten
 
 - [X] T039 [P] Crear la prueba de arquitectura en `DOMT/ArchitectureTests.cs` que verifique por reflexión que los ensamblados Domain y Application no referencian Entity Framework Core ni Npgsql y que Domain no referencia otros proyectos (Principio III)
 - [X] T040 [P] Revisar que ningún proyecto, ruta ni DTO introduzca conceptos fuera de alcance (variantes, pedidos, inventario, recetas, clientes, sucursales) buscando en `backend/` y `frontend/admin/` (Principios II y VIII)
-- [ ] T041 Ejecutar los 20 escenarios de `specs/001-catalogo-productos/quickstart.md` contra la API y la interfaz y corregir las diferencias
-- [ ] T042 Verificar las condiciones de la excepción transitoria del Principio IV (constitución): todos los endpoints cuelgan de `/api/admin/catalog`, no existe ningún artefacto de despliegue o exposición fuera del entorno de desarrollo, y el cierre queda registrado en Complexity Tracking de `specs/001-catalogo-productos/plan.md`
+- [X] T041 Ejecutar los 20 escenarios de `specs/001-catalogo-productos/quickstart.md` contra la API y la interfaz y corregir las diferencias (2026-09-21: los 20 escenarios pasan contra la API sobre una base recién creada; la interfaz se recorrió en Chromium headless con la API real: crear, repetir, baja y reactivación, disponibilidad, precio e imagen)
+- [X] T042 Verificar las condiciones de la excepción transitoria del Principio IV (constitución): todos los endpoints cuelgan de `/api/admin/catalog`, no existe ningún artefacto de despliegue o exposición fuera del entorno de desarrollo, y el cierre queda registrado en Complexity Tracking de `specs/001-catalogo-productos/plan.md` (2026-09-21: condiciones (a) y (b) verificadas y registradas en plan.md; el cierre (c) queda pendiente de la feature de usuarios y roles)
 
 ---
 
