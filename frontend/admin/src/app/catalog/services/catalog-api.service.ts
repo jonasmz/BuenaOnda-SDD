@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CATALOG_API_URL } from '../../core/api-config';
 import { Category, CategoryInput } from '../models/category';
-import { CreateProductInput, OptionInput, Product, UpdateProductInput } from '../models/product';
+import { CreateProductInput, Product, UpdateProductInput } from '../models/product';
 
 /** Cliente HTTP de la API administrativa del catálogo (contracts/catalog-admin-api.md). */
 @Injectable({ providedIn: 'root' })
@@ -64,25 +64,7 @@ export class CatalogApiService {
     return this.http.post<Product>(`${this.baseUrl}/products/${id}/reactivate`, {});
   }
 
-  updateOption(productId: string, optionId: string, input: Omit<OptionInput, 'isMarkedAvailable'>): Observable<Product> {
-    return this.http.put<Product>(`${this.baseUrl}/products/${productId}/options/${optionId}`, input);
-  }
-
-  setOptionAvailability(productId: string, optionId: string, isMarkedAvailable: boolean): Observable<Product> {
-    return this.http.put<Product>(`${this.baseUrl}/products/${productId}/options/${optionId}/availability`, {
-      isMarkedAvailable,
-    });
-  }
-
-  deactivateOption(productId: string, optionId: string): Observable<Product> {
-    return this.http.post<Product>(`${this.baseUrl}/products/${productId}/options/${optionId}/deactivate`, {});
-  }
-
-  reactivateOption(productId: string, optionId: string): Observable<Product> {
-    return this.http.post<Product>(`${this.baseUrl}/products/${productId}/options/${optionId}/reactivate`, {});
-  }
-
-  deleteOption(productId: string, optionId: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/products/${productId}/options/${optionId}`);
+  setProductAvailability(id: string, isMarkedAvailable: boolean): Observable<Product> {
+    return this.http.put<Product>(`${this.baseUrl}/products/${id}/availability`, { isMarkedAvailable });
   }
 }

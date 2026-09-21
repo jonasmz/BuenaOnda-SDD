@@ -25,11 +25,7 @@ import { CatalogApiService } from '../../services/catalog-api.service';
           <tr>
             <td>{{ product.name }}</td>
             <td>{{ categoryName(product.categoryId) }}</td>
-            <td>
-              @for (option of product.options; track option.id) {
-                <div>{{ option.price | currency }}</div>
-              }
-            </td>
+            <td>{{ product.price | currency }}</td>
             <td>
               <span class="badge me-1" [class.bg-success]="product.isAvailable" [class.bg-warning]="!product.isAvailable">
                 {{ product.isAvailable ? 'Disponible' : 'No disponible' }}
@@ -44,7 +40,13 @@ import { CatalogApiService } from '../../services/catalog-api.service';
                 <span class="badge bg-secondary">Inactivo</span>
               }
             </td>
-            <td class="text-end">
+            <td class="text-end text-nowrap">
+              <div class="form-check form-switch d-inline-block me-2 align-middle">
+                <input type="checkbox" class="form-check-input" role="switch" [id]="'avail-' + product.id"
+                  [checked]="product.isMarkedAvailable" [disabled]="!product.isActive"
+                  (change)="setAvailability(product, $any($event.target).checked)" />
+                <label class="form-check-label" [for]="'avail-' + product.id">Disponible</label>
+              </div>
               <a class="btn btn-sm btn-outline-primary me-1" [routerLink]="[product.id, 'edit']">
                 <i class="fa-solid fa-pen me-1"></i>Editar
               </a>
@@ -85,10 +87,22 @@ export class ProductList {
   }
 
   protected toggle(product: Product): void {
-    const request = product.isActive ? this.api.deactivateProduct(product.id) : this.api.reactivateProduct(product.id);
+    this.replace(product.isActive ? this.api.deactivateProduct(product.id) : this.api.reactivateProduct(product.id));
+  }
+
+  protected setAvailability(product: Product, isMarkedAvailable: boolean): void {
+    this.replace(this.api.setProductAvailability(product.id, isMarkedAvailable));
+  }
+
+  private replace(request: ReturnType<CatalogApiService['deactivateProduct']>): void {
+    this.error.set(null);
     request.subscribe({
       next: (updated) => this.products.update((list) => list.map((p) => (p.id === updated.id ? updated : p))),
-      error: () => this.error.set('No se pudo cambiar el estado del producto.'),
+      error: (e) => {
+        this.error.set(e.error?.detail ?? 'No se pudo actualizar el producto.');
+        // Restablece el conmutador con el estado real del servidor.
+        this.products.update((list) => [...list]);
+      },
     });
   }
 }

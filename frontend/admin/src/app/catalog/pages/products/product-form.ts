@@ -2,19 +2,16 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Characteristic, Product, SellableOption } from '../../models/product';
 import { Category } from '../../models/category';
 import { CatalogApiService } from '../../services/catalog-api.service';
-import { OptionForm } from '../../components/option-form/option-form';
-import { emptyVariation, VariationDraft, VariationEditor } from '../../components/variation-editor/variation-editor';
 
 /**
- * Alta y modificación de un producto: al crear se define su estructura de variación (características y
- * opciones con precio); al modificar se edita la información comercial y se consultan sus opciones.
+ * Alta y modificación de un producto plano: nombre (incluye la presentación o variedad), categoría,
+ * descripción, imagen y precio; al crear se indica además su disponibilidad inicial.
  */
 @Component({
   selector: 'app-product-form',
-  imports: [ReactiveFormsModule, RouterLink, VariationEditor, OptionForm],
+  imports: [ReactiveFormsModule, RouterLink],
   template: `
     <h1 class="h3 mb-3">{{ id() ? 'Modificar producto' : 'Nuevo producto' }}</h1>
     @if (error()) {
@@ -23,7 +20,7 @@ import { emptyVariation, VariationDraft, VariationEditor } from '../../component
     <form [formGroup]="form" (ngSubmit)="save()" class="col-md-6">
       <div class="mb-3">
         <label class="form-label" for="name">Nombre</label>
-        <input id="name" class="form-control" formControlName="name" />
+        <input id="name" class="form-control" formControlName="name" placeholder="Ej. Papas fritas grandes" />
         @if (form.controls.name.touched && form.controls.name.invalid) {
           <div class="text-danger small">El nombre es obligatorio.</div>
         }
@@ -40,6 +37,13 @@ import { emptyVariation, VariationDraft, VariationEditor } from '../../component
         </select>
       </div>
       <div class="mb-3">
+        <label class="form-label" for="price">Precio</label>
+        <input id="price" type="number" min="0" step="0.01" class="form-control" formControlName="price" />
+        @if (form.controls.price.touched && form.controls.price.invalid) {
+          <div class="text-danger small">Ingrese un precio igual o mayor que 0.</div>
+        }
+      </div>
+      <div class="mb-3">
         <label class="form-label" for="description">Descripción (opcional)</label>
         <textarea id="description" class="form-control" rows="2" formControlName="description"></textarea>
       </div>
@@ -49,13 +53,10 @@ import { emptyVariation, VariationDraft, VariationEditor } from '../../component
         <div class="form-text">Sin imagen el producto no es visible al público.</div>
       </div>
       @if (!id()) {
-        <app-variation-editor [(draft)]="variation" />
-      } @else {
-        <h2 class="h5">Opciones</h2>
-        @for (option of options(); track option.id) {
-          <app-option-form [productId]="id()!" [option]="option" [characteristics]="characteristics()"
-            (productChanged)="applyProduct($event)" (removed)="reload()" />
-        }
+        <div class="form-check form-switch mb-3">
+          <input id="available" type="checkbox" class="form-check-input" formControlName="isMarkedAvailable" />
+          <label class="form-check-label" for="available">Disponible</label>
+        </div>
       }
       <button class="btn btn-primary me-2" type="submit" [disabled]="saving()">
         <i class="fa-solid fa-floppy-disk me-1"></i>Guardar
@@ -72,44 +73,35 @@ export class ProductForm {
   readonly id = input<string>();
 
   protected readonly categories = signal<Category[]>([]);
-  protected readonly characteristics = signal<Characteristic[]>([]);
-  protected readonly options = signal<SellableOption[]>([]);
-  protected readonly variation = signal<VariationDraft>(emptyVariation());
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly form = inject(FormBuilder).nonNullable.group({
     name: ['', [Validators.required, Validators.pattern(/\S/)]],
     categoryId: ['', Validators.required],
+    price: [0, [Validators.required, Validators.min(0)]],
     description: [''],
     imageUrl: [''],
+    isMarkedAvailable: [true],
   });
 
   constructor() {
     this.api.listCategories(true).subscribe((categories) => this.categories.set(categories));
-    queueMicrotask(() => this.reload());
-  }
-
-  protected reload(): void {
-    const id = this.id();
-    if (id) {
-      this.api.getProduct(id).subscribe({
-        next: (p) => {
-          this.form.patchValue({
-            name: p.name,
-            categoryId: p.categoryId,
-            description: p.description ?? '',
-            imageUrl: p.imageUrl ?? '',
-          });
-          this.applyProduct(p);
-        },
-        error: () => this.error.set('No se encontró el producto.'),
-      });
-    }
-  }
-
-  protected applyProduct(product: Product): void {
-    this.characteristics.set(product.characteristics);
-    this.options.set(product.options);
+    queueMicrotask(() => {
+      const id = this.id();
+      if (id) {
+        this.api.getProduct(id).subscribe({
+          next: (p) =>
+            this.form.patchValue({
+              name: p.name,
+              categoryId: p.categoryId,
+              price: p.price,
+              description: p.description ?? '',
+              imageUrl: p.imageUrl ?? '',
+            }),
+          error: () => this.error.set('No se encontró el producto.'),
+        });
+      }
+    });
   }
 
   protected save(): void {
@@ -123,23 +115,15 @@ export class ProductForm {
       description: v.description.trim() || null,
       imageUrl: v.imageUrl.trim() || null,
       categoryId: v.categoryId,
+      price: v.price,
     };
     const id = this.id();
-    const draft = this.variation();
-    if (!id && draft.options.some((o) => !Number.isFinite(o.price) || o.price < 0)) {
-      this.error.set('Cada opción necesita un precio igual o mayor que 0.');
-      return;
-    }
     this.saving.set(true);
     this.error.set(null);
-    const request = id
+    (id
       ? this.api.updateProduct(id, info)
-      : this.api.createProduct({
-          ...info,
-          characteristics: draft.characteristics,
-          options: draft.options.map((o) => ({ ...o, description: null, imageUrl: null })),
-        });
-    request.subscribe({
+      : this.api.createProduct({ ...info, isMarkedAvailable: v.isMarkedAvailable })
+    ).subscribe({
       next: () => this.router.navigate(['/catalog/products']),
       error: (e: HttpErrorResponse) => {
         this.saving.set(false);

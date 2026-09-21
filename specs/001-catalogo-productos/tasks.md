@@ -96,18 +96,18 @@ Aplicación web según plan.md: `backend/` (solución .NET hexagonal) y `fronten
 
 ### Tests for User Story 2
 
-- [ ] T022 [P] [US2] Pruebas de dominio de `Product` plano en `DOMT/Catalog/ProductTests.cs`: nombre no vacío, precio obligatorio y no negativo, marca de disponibilidad obligatoria, imagen opcional y URL válida, categoría inactiva rechazada, indicadores derivados de disponibilidad y visibilidad pública (data-model.md)
-- [ ] T023 [P] [US2] Pruebas de integración en `APIT/Catalog/ProductsApiTests.cs`: crear producto sin imagen (visible al público = falso), asignar imagen, modificar precio, nombre repetido en la misma categoría → 409, mismo nombre en otra categoría → 201, categoría inactiva → 409, mover a una categoría donde ya existe el nombre → 409, datos inválidos → 400
-- [ ] T024 [P] [US2] Pruebas de casos de uso de productos (unicidad por categoría, categoría inactiva) con dobles de los puertos en `backend/tests/BuenaOnda.Application.Tests/Catalog/ProductUseCasesTests.cs`
+- [X] T022 [P] [US2] Pruebas de dominio de `Product` plano en `DOMT/Catalog/ProductTests.cs`: nombre no vacío, precio obligatorio y no negativo, marca de disponibilidad obligatoria, imagen opcional y URL válida, categoría inactiva rechazada, indicadores derivados de disponibilidad y visibilidad pública (data-model.md)
+- [X] T023 [P] [US2] Pruebas de integración en `APIT/Catalog/ProductsApiTests.cs`: crear producto sin imagen (visible al público = falso), asignar imagen, modificar precio, nombre repetido en la misma categoría → 409, mismo nombre en otra categoría → 201, categoría inactiva → 409, mover a una categoría donde ya existe el nombre → 409, datos inválidos → 400
+- [X] T024 [P] [US2] Pruebas de casos de uso de productos (unicidad por categoría, categoría inactiva) con dobles de los puertos en `backend/tests/BuenaOnda.Application.Tests/Catalog/ProductUseCasesTests.cs`
 
 ### Implementation for User Story 2
 
-- [ ] T025 [US2] Reemplazar `DOM/Product.cs` por el agregado plano (Id, Nombre único en su categoría, Descripción, Imagen, Precio, Disponibilidad manual, Categoría, Activo) y actualizar el puerto `IProductRepository`; eliminar del dominio `SellableOption`, `VariationCharacteristic`, `OptionValue` y `OptionDraft`
-- [ ] T026 [US2] Reemplazar los casos de uso de productos en `APP/Products/` por `CreateProduct`, `GetProduct`, `ListProducts` y `UpdateProduct` planos, con `ProductView` con `isAvailable` e `isVisibleToPublic`; eliminar `IOptionReferenceChecker` y los casos de uso de opciones y características (FR-005, FR-006, FR-008, FR-009, FR-011)
-- [ ] T027 [US2] Reemplazar la configuración EF Core y el repositorio de productos en `INF/Products/` con índice único (categoría, nombre normalizado); eliminar `NoReferencesOptionReferenceChecker`; reemplazar las migraciones existentes por una única migración inicial del catálogo plano y recrear la base de desarrollo (depende de T025)
-- [ ] T028 [US2] Reemplazar `API/ProductsController.cs` por `GET /products`, `POST /products`, `GET /products/{id}` y `PUT /products/{id}` planos, y ajustar los DTOs (depende de T026)
-- [ ] T029 [P] [US2] Reemplazar los modelos y métodos de productos en `FE/models/product.ts` y `FE/services/catalog-api.service.ts`; eliminar `FE/components/variation-editor/` y `FE/components/option-form/` con sus pruebas
-- [ ] T030 [US2] Ajustar las páginas de listado y formulario de productos en `FE/pages/products/` a productos planos: precio, disponibilidad, "sin imagen" e indicadores (depende de T029, T028)
+- [X] T025 [US2] Reemplazar `DOM/Product.cs` por el agregado plano (Id, Nombre único en su categoría, Descripción, Imagen, Precio, Disponibilidad manual, Categoría, Activo) y actualizar el puerto `IProductRepository`; eliminar del dominio `SellableOption`, `VariationCharacteristic`, `OptionValue` y `OptionDraft`
+- [X] T026 [US2] Reemplazar los casos de uso de productos en `APP/Products/` por `CreateProduct`, `GetProduct`, `ListProducts` y `UpdateProduct` planos, con `ProductView` con `isAvailable` e `isVisibleToPublic`; eliminar `IOptionReferenceChecker` y los casos de uso de opciones y características (FR-005, FR-006, FR-008, FR-009, FR-011)
+- [X] T027 [US2] Reemplazar la configuración EF Core y el repositorio de productos en `INF/Products/` con índice único (categoría, nombre normalizado); eliminar `NoReferencesOptionReferenceChecker`; reemplazar las migraciones existentes por una única migración inicial del catálogo plano y recrear la base de desarrollo (depende de T025)
+- [X] T028 [US2] Reemplazar `API/ProductsController.cs` por `GET /products`, `POST /products`, `GET /products/{id}` y `PUT /products/{id}` planos, y ajustar los DTOs (depende de T026)
+- [X] T029 [P] [US2] Reemplazar los modelos y métodos de productos en `FE/models/product.ts` y `FE/services/catalog-api.service.ts`; eliminar `FE/components/variation-editor/` y `FE/components/option-form/` con sus pruebas
+- [X] T030 [US2] Ajustar las páginas de listado y formulario de productos en `FE/pages/products/` a productos planos: precio, disponibilidad, "sin imagen" e indicadores (depende de T029, T028)
 
 **Checkpoint**: las historias 1 y 2 funcionan con catálogo plano; no queda código de variantes.
 
@@ -121,15 +121,15 @@ Aplicación web según plan.md: `backend/` (solución .NET hexagonal) y `fronten
 
 ### Tests for User Story 3
 
-- [ ] T031 [P] [US3] Pruebas de dominio en `DOMT/Catalog/CatalogLifecycleTests.cs`: baja y reactivación de categoría y producto, producto inactivo o de categoría inactiva no admite modificaciones (invariante 5), la baja no altera la marca manual (invariante 6), indicadores derivados tras la baja
-- [ ] T032 [P] [US3] Pruebas de integración en `APIT/Catalog/CatalogModificationApiTests.cs`: fijar disponibilidad, modificar una categoría conserva la asociación de sus productos, baja de categoría con productos, reactivación conserva marcas, modificar un producto inactivo → 409, no existe endpoint de eliminación de productos ni categorías
+- [X] T031 [P] [US3] Pruebas de dominio en `DOMT/Catalog/CatalogLifecycleTests.cs`: baja y reactivación de categoría y producto, producto inactivo o de categoría inactiva no admite modificaciones (invariante 5), la baja no altera la marca manual (invariante 6), indicadores derivados tras la baja
+- [X] T032 [P] [US3] Pruebas de integración en `APIT/Catalog/CatalogModificationApiTests.cs`: fijar disponibilidad, modificar una categoría conserva la asociación de sus productos, baja de categoría con productos, reactivación conserva marcas, modificar un producto inactivo → 409, no existe endpoint de eliminación de productos ni categorías
 
 ### Implementation for User Story 3
 
-- [ ] T033 [US3] Implementar en `DOM/Product.cs` y `DOM/Category.cs` `Deactivate`, `Reactivate` y `SetAvailability`, con la protección del invariante 5 y sin eliminación definitiva
-- [ ] T034 [US3] Crear los casos de uso `DeactivateCategory`, `ReactivateCategory`, `DeactivateProduct`, `ReactivateProduct` y `SetProductAvailability` en `APP/Categories/` y `APP/Products/` (depende de T033)
-- [ ] T035 [US3] Agregar los endpoints `POST /categories/{id}/deactivate|reactivate`, `POST /products/{id}/deactivate|reactivate` y `PUT /products/{id}/availability` (depende de T034)
-- [ ] T036 [US3] Agregar en `FE/pages/categories/` y `FE/pages/products/` las acciones de dar de baja y reactivar y el conmutador de disponibilidad, con estado visible (depende de T030, T035)
+- [X] T033 [US3] Implementar en `DOM/Product.cs` y `DOM/Category.cs` `Deactivate`, `Reactivate` y `SetAvailability`, con la protección del invariante 5 y sin eliminación definitiva
+- [X] T034 [US3] Crear los casos de uso `DeactivateCategory`, `ReactivateCategory`, `DeactivateProduct`, `ReactivateProduct` y `SetProductAvailability` en `APP/Categories/` y `APP/Products/` (depende de T033)
+- [X] T035 [US3] Agregar los endpoints `POST /categories/{id}/deactivate|reactivate`, `POST /products/{id}/deactivate|reactivate` y `PUT /products/{id}/availability` (depende de T034)
+- [X] T036 [US3] Agregar en `FE/pages/categories/` y `FE/pages/products/` las acciones de dar de baja y reactivar y el conmutador de disponibilidad, con estado visible (depende de T030, T035)
 
 **Checkpoint**: las historias 1 a 3 funcionan.
 
@@ -141,8 +141,8 @@ Aplicación web según plan.md: `backend/` (solución .NET hexagonal) y `fronten
 
 **Independent Test**: definir una categoría y productos distintos a los actuales usando solo los conceptos existentes (quickstart 7). Los tragos NO se incorporan al alcance actual.
 
-- [ ] T037 [P] [US4] Prueba de integración en `APIT/Catalog/CatalogExtensibilityTests.cs`: crear la categoría "Tragos" y el producto "Fernet con cola" sin modificar código ni migraciones (FR-012, SC-005)
-- [ ] T038 [P] [US4] Prueba de integración en `APIT/Catalog/CurrentProductsRepresentationTests.cs`: representar todos los productos de `system_requirements.txt` §9 como productos planos según data-model.md (SC-001, SC-002)
+- [X] T037 [P] [US4] Prueba de integración en `APIT/Catalog/CatalogExtensibilityTests.cs`: crear la categoría "Tragos" y el producto "Fernet con cola" sin modificar código ni migraciones (FR-012, SC-005)
+- [X] T038 [P] [US4] Prueba de integración en `APIT/Catalog/CurrentProductsRepresentationTests.cs`: representar todos los productos de `system_requirements.txt` §9 como productos planos según data-model.md (SC-001, SC-002)
 
 **Checkpoint**: las cuatro historias funcionan.
 
@@ -150,8 +150,8 @@ Aplicación web según plan.md: `backend/` (solución .NET hexagonal) y `fronten
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T039 [P] Crear la prueba de arquitectura en `DOMT/ArchitectureTests.cs` que verifique por reflexión que los ensamblados Domain y Application no referencian Entity Framework Core ni Npgsql y que Domain no referencia otros proyectos (Principio III)
-- [ ] T040 [P] Revisar que ningún proyecto, ruta ni DTO introduzca conceptos fuera de alcance (variantes, pedidos, inventario, recetas, clientes, sucursales) buscando en `backend/` y `frontend/admin/` (Principios II y VIII)
+- [X] T039 [P] Crear la prueba de arquitectura en `DOMT/ArchitectureTests.cs` que verifique por reflexión que los ensamblados Domain y Application no referencian Entity Framework Core ni Npgsql y que Domain no referencia otros proyectos (Principio III)
+- [X] T040 [P] Revisar que ningún proyecto, ruta ni DTO introduzca conceptos fuera de alcance (variantes, pedidos, inventario, recetas, clientes, sucursales) buscando en `backend/` y `frontend/admin/` (Principios II y VIII)
 - [ ] T041 Ejecutar los 20 escenarios de `specs/001-catalogo-productos/quickstart.md` contra la API y la interfaz y corregir las diferencias
 - [ ] T042 Verificar las condiciones de la excepción transitoria del Principio IV (constitución): todos los endpoints cuelgan de `/api/admin/catalog`, no existe ningún artefacto de despliegue o exposición fuera del entorno de desarrollo, y el cierre queda registrado en Complexity Tracking de `specs/001-catalogo-productos/plan.md`
 

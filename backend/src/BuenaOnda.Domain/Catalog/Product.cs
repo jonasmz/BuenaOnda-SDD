@@ -3,14 +3,11 @@ using BuenaOnda.Domain.Common;
 namespace BuenaOnda.Domain.Catalog;
 
 /// <summary>
-/// Producto del catálogo: raíz del agregado que controla su categoría, sus características de
-/// variación y sus opciones comercializables, y garantiza los invariantes 1 a 5 y 7.
+/// Producto del catálogo plano: pertenece a una categoría y lleva su propio precio y su marca manual de
+/// disponibilidad. Cada presentación o variedad que se vende por separado es un producto distinto.
 /// </summary>
 public sealed class Product
 {
-    private readonly List<SellableOption> _options = [];
-    private readonly List<VariationCharacteristic> _characteristics = [];
-
     private Product()
     {
         Name = string.Empty;
@@ -28,61 +25,40 @@ public sealed class Product
 
     public string? ImageUrl { get; private set; }
 
+    public decimal Price { get; private set; }
+
+    /// <summary>Marca manual de disponibilidad; la baja y la reactivación no la modifican.</summary>
+    public bool IsMarkedAvailable { get; private set; }
+
     public Guid CategoryId { get; private set; }
 
     public bool IsActive { get; private set; }
 
-    public IReadOnlyList<SellableOption> Options => _options;
-
-    public IReadOnlyList<VariationCharacteristic> Characteristics => _characteristics;
-
     public bool HasImage => ImageUrl is not null;
 
-    /// <summary>Crea un producto sin características de variación: tiene exactamente una opción (invariante 1).</summary>
     public static Product Create(
-        string? name, string? description, string? imageUrl, Category category,
-        decimal? price, bool? isMarkedAvailable, string? optionDescription = null, string? optionImageUrl = null) =>
-        Create(name, description, imageUrl, category, null,
-            [new OptionDraft(null, price, isMarkedAvailable, optionDescription, optionImageUrl)]);
-
-    /// <summary>Crea un producto con sus características y opciones (invariantes 1 a 4).</summary>
-    public static Product Create(
-        string? name, string? description, string? imageUrl, Category category,
-        IReadOnlyList<string>? characteristicNames, IReadOnlyList<OptionDraft>? options)
+        string? name, string? description, string? imageUrl, Category category, decimal? price, bool? isMarkedAvailable)
     {
         if (!category.IsActive)
         {
             throw new ConflictException("No se puede asignar un producto a una categoría inactiva.");
         }
 
-        var product = new Product { Id = Guid.NewGuid(), IsActive = true, CategoryId = category.Id };
-        product.SetInformation(name, description, imageUrl);
-
-        foreach (var characteristicName in characteristicNames ?? [])
+        var product = new Product
         {
-            product.AddCharacteristicName(characteristicName);
-        }
-
-        if (options is null || options.Count == 0)
-        {
-            throw new ValidationException("El producto necesita al menos una opción con su precio.");
-        }
-
-        if (product._characteristics.Count == 0 && options.Count != 1)
-        {
-            throw new ValidationException("Un producto sin características tiene exactamente una opción.");
-        }
-
-        foreach (var draft in options)
-        {
-            product.AppendOption(draft);
-        }
-
+            Id = Guid.NewGuid(),
+            IsActive = true,
+            CategoryId = category.Id,
+            IsMarkedAvailable = isMarkedAvailable
+                ?? throw new ValidationException("La disponibilidad del producto es obligatoria."),
+        };
+        product.SetInformation(name, description, imageUrl, price);
         return product;
     }
 
-    /// <summary>Modifica la información comercial; el producto y su categoría actual deben estar activos (invariante 7).</summary>
-    public void Update(string? name, string? description, string? imageUrl, Category currentCategory, Category targetCategory)
+    /// <summary>Modifica la información comercial y el precio; el producto y su categoría actual deben estar activos.</summary>
+    public void Update(
+        string? name, string? description, string? imageUrl, decimal? price, Category currentCategory, Category targetCategory)
     {
         EnsureModifiable(currentCategory);
         if (targetCategory.Id != CategoryId && !targetCategory.IsActive)
@@ -90,134 +66,25 @@ public sealed class Product
             throw new ConflictException("No se puede asignar un producto a una categoría inactiva.");
         }
 
-        SetInformation(name, description, imageUrl);
+        SetInformation(name, description, imageUrl, price);
         CategoryId = targetCategory.Id;
     }
 
-    /// <summary>Agrega una opción comercializable distinguible de las existentes (FR-010, FR-011).</summary>
-    public SellableOption AddOption(OptionDraft draft, Category category)
+    /// <summary>Fija la marca manual de disponibilidad (FR-010).</summary>
+    public void SetAvailability(bool? isMarkedAvailable, Category category)
     {
         EnsureModifiable(category);
-        return AppendOption(draft);
+        IsMarkedAvailable = isMarkedAvailable
+            ?? throw new ValidationException("La disponibilidad del producto es obligatoria.");
     }
 
-    /// <summary>Agrega una característica aportando su valor para cada opción existente (invariante 5).</summary>
-    public VariationCharacteristic AddCharacteristic(
-        string? name, IReadOnlyDictionary<Guid, string>? valuesForExistingOptions, Category category)
-    {
-        EnsureModifiable(category);
-        var provided = valuesForExistingOptions ?? new Dictionary<Guid, string>();
-        if (provided.Keys.Any(id => _options.All(o => o.Id != id)))
-        {
-            throw new ValidationException("Se indicó un valor para una opción que no pertenece al producto.");
-        }
-
-        if (_options.Any(o => !provided.TryGetValue(o.Id, out var v) || string.IsNullOrWhiteSpace(v)))
-        {
-            throw new ValidationException("Debe indicarse un valor no vacío de la nueva característica para cada opción existente.");
-        }
-
-        var characteristic = AddCharacteristicName(name);
-        foreach (var option in _options)
-        {
-            option.AddValue(new OptionValue(characteristic.Id, provided[option.Id]));
-        }
-
-        ResignAllAndCheckDistinct();
-        return characteristic;
-    }
-
-    /// <summary>Quita una característica solo si las opciones restantes siguen siendo distinguibles.</summary>
-    public void RemoveCharacteristic(Guid characteristicId, Category category)
-    {
-        EnsureModifiable(category);
-        var characteristic = _characteristics.FirstOrDefault(c => c.Id == characteristicId)
-            ?? throw new NotFoundException($"No existe la característica {characteristicId} en el producto.");
-
-        var remaining = _options.Select(o => o.SignatureWithout(_characteristics, characteristicId)).ToList();
-        if (remaining.Distinct().Count() != remaining.Count)
-        {
-            throw new ConflictException("Las opciones del producto dejarían de ser distinguibles entre sí.");
-        }
-
-        _characteristics.Remove(characteristic);
-        foreach (var option in _options)
-        {
-            option.DropValue(characteristicId);
-            option.Resign(_characteristics);
-        }
-    }
-
-    /// <summary>Baja reversible del producto; no altera la marca manual de sus opciones (invariante 9).</summary>
+    /// <summary>Baja reversible; no altera la marca manual de disponibilidad.</summary>
     public void Deactivate() => IsActive = false;
 
     public void Reactivate() => IsActive = true;
 
-    /// <summary>Modifica valores, precio, descripción e imagen de una opción; el id no cambia (FR-012, FR-014).</summary>
-    public void UpdateOption(
-        Guid optionId, OptionDraft draft, Category category)
-    {
-        EnsureModifiable(category);
-        var option = GetOption(optionId);
-        var values = ResolveValues(draft.Values);
-        var signature = SellableOption.Sign(_characteristics, values);
-        if (_options.Any(o => o.Id != optionId && o.Signature == signature))
-        {
-            throw new ConflictException("Ya existe otra opción del producto con esos mismos valores (aunque esté inactiva).");
-        }
-
-        option.Update(draft.Price, draft.Description, draft.ImageUrl);
-        option.SetValues(values, _characteristics);
-    }
-
-    /// <summary>Fija la marca manual de disponibilidad de una opción (FR-015).</summary>
-    public void SetOptionAvailability(Guid optionId, bool? isMarkedAvailable, Category category)
-    {
-        EnsureModifiable(category);
-        var option = GetOption(optionId);
-        option.SetAvailability(isMarkedAvailable
-            ?? throw new ValidationException("La disponibilidad de la opción es obligatoria."));
-    }
-
-    public void DeactivateOption(Guid optionId, Category category)
-    {
-        EnsureModifiable(category);
-        GetOption(optionId).Deactivate();
-    }
-
-    public void ReactivateOption(Guid optionId, Category category)
-    {
-        EnsureModifiable(category);
-        GetOption(optionId).Reactivate();
-    }
-
-    /// <summary>
-    /// Elimina definitivamente una opción solo si nunca fue referenciada y no es la última del producto
-    /// (invariantes 10 y 11); quien llama informa si fue referenciada.
-    /// </summary>
-    public void RemoveOption(Guid optionId, bool isReferenced, Category category)
-    {
-        EnsureModifiable(category);
-        var option = GetOption(optionId);
-        if (isReferenced)
-        {
-            throw new ConflictException("La opción fue referenciada por otras funcionalidades: solo puede darse de baja.");
-        }
-
-        if (_options.Count == 1)
-        {
-            throw new ConflictException("Un producto conserva siempre al menos una opción.");
-        }
-
-        _options.Remove(option);
-    }
-
-    private SellableOption GetOption(Guid optionId) =>
-        _options.FirstOrDefault(o => o.Id == optionId)
-            ?? throw new NotFoundException($"No existe la opción {optionId} en el producto.");
-
-    /// <summary>Disponible si alguna de sus opciones tiene disponibilidad efectiva.</summary>
-    public bool IsAvailable(Category category) => _options.Any(o => o.IsAvailable(this, category));
+    /// <summary>Disponibilidad efectiva: marca manual, producto activo y categoría activa.</summary>
+    public bool IsAvailable(Category category) => IsMarkedAvailable && IsActive && category.IsActive;
 
     /// <summary>Visible al público: producto activo, categoría activa y con imagen.</summary>
     public bool IsVisibleToPublic(Category category) => IsActive && category.IsActive && HasImage;
@@ -230,86 +97,24 @@ public sealed class Product
         }
     }
 
-    private VariationCharacteristic AddCharacteristicName(string? name)
-    {
-        var characteristic = VariationCharacteristic.Create(name);
-        if (_characteristics.Any(c => c.NormalizedName == characteristic.NormalizedName))
-        {
-            throw new ConflictException($"El producto ya tiene una característica llamada '{characteristic.Name}'.");
-        }
-
-        _characteristics.Add(characteristic);
-        return characteristic;
-    }
-
-    private SellableOption AppendOption(OptionDraft draft)
-    {
-        var values = ResolveValues(draft.Values);
-        var option = SellableOption.Create(
-            values, _characteristics, draft.Price, draft.IsMarkedAvailable, draft.Description, draft.ImageUrl);
-        if (_options.Any(o => o.Signature == option.Signature))
-        {
-            throw new ConflictException("Ya existe una opción del producto con esos mismos valores (aunque esté inactiva).");
-        }
-
-        _options.Add(option);
-        return option;
-    }
-
-    /// <summary>Exige un valor no vacío para cada característica y ninguno adicional (invariante 2).</summary>
-    private List<OptionValue> ResolveValues(IReadOnlyDictionary<string, string>? valuesByName)
-    {
-        var byName = new Dictionary<string, string>();
-        foreach (var (key, value) in valuesByName ?? new Dictionary<string, string>())
-        {
-            if (!byName.TryAdd(Catalog.NormalizedName.Normalize(key), value))
-            {
-                throw new ValidationException($"La característica '{key}' se indicó más de una vez.");
-            }
-        }
-
-        if (byName.Keys.Any(k => _characteristics.All(c => c.NormalizedName != k)))
-        {
-            throw new ValidationException("Se indicó un valor para una característica que el producto no tiene.");
-        }
-
-        var values = new List<OptionValue>();
-        foreach (var characteristic in _characteristics)
-        {
-            if (!byName.TryGetValue(characteristic.NormalizedName, out var value) || string.IsNullOrWhiteSpace(value))
-            {
-                throw new ValidationException($"Falta el valor de la característica '{characteristic.Name}'.");
-            }
-
-            values.Add(new OptionValue(characteristic.Id, value));
-        }
-
-        return values;
-    }
-
-    private void ResignAllAndCheckDistinct()
-    {
-        foreach (var option in _options)
-        {
-            option.Resign(_characteristics);
-        }
-
-        if (_options.Select(o => o.Signature).Distinct().Count() != _options.Count)
-        {
-            throw new ConflictException("Las opciones del producto dejarían de ser distinguibles entre sí.");
-        }
-    }
-
-    private void SetInformation(string? name, string? description, string? imageUrl)
+    /// <summary>Valida todo antes de asignar, para no dejar el producto a medias si algo falla.</summary>
+    private void SetInformation(string? name, string? description, string? imageUrl, decimal? priceValue)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
             throw new ValidationException("El nombre del producto es obligatorio.");
         }
 
+        if (priceValue is null or < 0)
+        {
+            throw new ValidationException("El precio es obligatorio y no puede ser negativo.");
+        }
+
+        var image = ImageReference.Normalize(imageUrl);
         Name = name.Trim();
         NormalizedName = Catalog.NormalizedName.Normalize(Name);
         Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
-        ImageUrl = ImageReference.Normalize(imageUrl);
+        ImageUrl = image;
+        Price = priceValue.Value;
     }
 }

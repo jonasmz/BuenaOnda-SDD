@@ -71,6 +71,9 @@ namespace BuenaOnda.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsMarkedAvailable")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -80,6 +83,10 @@ namespace BuenaOnda.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.HasKey("Id");
 
@@ -89,71 +96,6 @@ namespace BuenaOnda.Infrastructure.Migrations
                     b.ToTable("products", (string)null);
                 });
 
-            modelBuilder.Entity("BuenaOnda.Domain.Catalog.SellableOption", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<string>("ImageUrl")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsMarkedAvailable")
-                        .HasColumnType("boolean");
-
-                    b.Property<decimal>("Price")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<Guid?>("ProductId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Signature")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId", "Signature")
-                        .IsUnique();
-
-                    b.ToTable("sellable_options", (string)null);
-                });
-
-            modelBuilder.Entity("BuenaOnda.Domain.Catalog.VariationCharacteristic", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("NormalizedName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid?>("ProductId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId", "NormalizedName")
-                        .IsUnique();
-
-                    b.ToTable("variation_characteristics", (string)null);
-                });
-
             modelBuilder.Entity("BuenaOnda.Domain.Catalog.Product", b =>
                 {
                     b.HasOne("BuenaOnda.Domain.Catalog.Category", null)
@@ -161,57 +103,6 @@ namespace BuenaOnda.Infrastructure.Migrations
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("BuenaOnda.Domain.Catalog.SellableOption", b =>
-                {
-                    b.HasOne("BuenaOnda.Domain.Catalog.Product", null)
-                        .WithMany("Options")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.OwnsMany("BuenaOnda.Domain.Catalog.OptionValue", "Values", b1 =>
-                        {
-                            b1.Property<Guid>("SellableOptionId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<Guid>("CharacteristicId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("NormalizedValue")
-                                .IsRequired()
-                                .HasMaxLength(500)
-                                .HasColumnType("character varying(500)");
-
-                            b1.Property<string>("Value")
-                                .IsRequired()
-                                .HasMaxLength(500)
-                                .HasColumnType("character varying(500)");
-
-                            b1.HasKey("SellableOptionId", "CharacteristicId");
-
-                            b1.ToTable("option_values", (string)null);
-
-                            b1.WithOwner()
-                                .HasForeignKey("SellableOptionId");
-                        });
-
-                    b.Navigation("Values");
-                });
-
-            modelBuilder.Entity("BuenaOnda.Domain.Catalog.VariationCharacteristic", b =>
-                {
-                    b.HasOne("BuenaOnda.Domain.Catalog.Product", null)
-                        .WithMany("Characteristics")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("BuenaOnda.Domain.Catalog.Product", b =>
-                {
-                    b.Navigation("Characteristics");
-
-                    b.Navigation("Options");
                 });
 #pragma warning restore 612, 618
         }

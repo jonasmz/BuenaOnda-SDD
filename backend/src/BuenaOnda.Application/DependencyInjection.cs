@@ -13,22 +13,15 @@ public static class DependencyInjection
         services.AddScoped<UpdateCategory>();
         services.AddScoped<GetCategory>();
         services.AddScoped<ListCategories>();
+        services.AddScoped<DeactivateCategory>();
+        services.AddScoped<ReactivateCategory>();
         services.AddScoped<CreateProduct>();
         services.AddScoped<UpdateProduct>();
         services.AddScoped<GetProduct>();
         services.AddScoped<ListProducts>();
-        services.AddScoped<AddOption>();
-        services.AddScoped<AddCharacteristic>();
-        services.AddScoped<RemoveCharacteristic>();
-        services.AddScoped<DeactivateCategory>();
-        services.AddScoped<ReactivateCategory>();
+        services.AddScoped<SetProductAvailability>();
         services.AddScoped<DeactivateProduct>();
         services.AddScoped<ReactivateProduct>();
-        services.AddScoped<UpdateOption>();
-        services.AddScoped<SetOptionAvailability>();
-        services.AddScoped<DeactivateOption>();
-        services.AddScoped<ReactivateOption>();
-        services.AddScoped<DeleteOption>();
         return services;
     }
 }

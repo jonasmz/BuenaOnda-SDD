@@ -10,22 +10,24 @@ public class ProductTests
     private static Category Inactive(string name)
     {
         var category = Category.Create(name, null);
-        typeof(Category).GetProperty(nameof(Category.IsActive))!.SetValue(category, false);
+        category.Deactivate();
         return category;
     }
 
     private static Product NewProduct(string? image = null, bool available = true) =>
-        Product.Create("Agua mineral", null, image, Bebidas, 1500m, available);
+        Product.Create("Agua mineral 500 ml", null, image, Bebidas, 1500m, available);
 
     [Fact]
-    public void Product_without_characteristics_has_exactly_one_option_with_own_price()
+    public void Create_starts_active_with_own_price_and_trimmed_normalized_name()
     {
-        var product = NewProduct();
+        var product = Product.Create("  Papas Fritas Grandes ", "  Con sal ", null, Bebidas, 1800m, true);
 
-        var option = Assert.Single(product.Options);
-        Assert.Equal(1500m, option.Price);
-        Assert.True(option.IsActive);
+        Assert.NotEqual(Guid.Empty, product.Id);
         Assert.True(product.IsActive);
+        Assert.Equal("Papas Fritas Grandes", product.Name);
+        Assert.Equal("papas fritas grandes", product.NormalizedName);
+        Assert.Equal("Con sal", product.Description);
+        Assert.Equal(1800m, product.Price);
         Assert.Equal(Bebidas.Id, product.CategoryId);
     }
 
@@ -35,13 +37,12 @@ public class ProductTests
     public void Name_is_required(string? name) =>
         Assert.Throws<ValidationException>(() => Product.Create(name, null, null, Bebidas, 1m, true));
 
-    [Theory]
-    [InlineData(-0.01)]
-    public void Negative_price_is_rejected(double price) =>
-        Assert.Throws<ValidationException>(() => Product.Create("X", null, null, Bebidas, (decimal)price, true));
-
     [Fact]
-    public void Zero_price_is_valid() => Assert.Equal(0m, Product.Create("X", null, null, Bebidas, 0m, true).Options[0].Price);
+    public void Negative_price_is_rejected_and_zero_is_valid()
+    {
+        Assert.Throws<ValidationException>(() => Product.Create("X", null, null, Bebidas, -0.01m, true));
+        Assert.Equal(0m, Product.Create("X", null, null, Bebidas, 0m, true).Price);
+    }
 
     [Fact]
     public void Price_and_availability_are_required()
@@ -72,31 +73,45 @@ public class ProductTests
     }
 
     [Fact]
-    public void With_image_product_is_visible_and_option_visibility_follows_product()
+    public void With_image_product_is_visible_only_while_its_category_is_active()
     {
         var product = NewProduct("https://cdn.example.com/agua.png");
 
         Assert.True(product.IsVisibleToPublic(Bebidas));
-        Assert.True(product.Options[0].IsVisibleToPublic(product, Bebidas));
         Assert.False(product.IsVisibleToPublic(Inactive("Otra")));
     }
 
     [Fact]
-    public void Option_marked_unavailable_makes_product_unavailable() =>
+    public void Product_marked_unavailable_is_unavailable() =>
         Assert.False(NewProduct(available: false).IsAvailable(Bebidas));
 
     [Fact]
-    public void Update_changes_commercial_information_and_moves_category()
+    public void Update_changes_information_price_and_category_keeping_id()
     {
         var product = NewProduct();
+        var id = product.Id;
         var postres = Category.Create("Postres", null);
 
-        product.Update("Agua", "Sin gas", "https://cdn.example.com/a.png", Bebidas, postres);
+        product.Update("Agua", "Sin gas", "https://cdn.example.com/a.png", 1700m, Bebidas, postres);
 
+        Assert.Equal(id, product.Id);
         Assert.Equal("Agua", product.Name);
         Assert.Equal("Sin gas", product.Description);
         Assert.True(product.HasImage);
+        Assert.Equal(1700m, product.Price);
         Assert.Equal(postres.Id, product.CategoryId);
+    }
+
+    [Fact]
+    public void Failed_update_leaves_product_untouched()
+    {
+        var product = NewProduct();
+
+        Assert.Throws<ValidationException>(() => product.Update("Otro", null, "nope", 5m, Bebidas, Bebidas));
+        Assert.Throws<ValidationException>(() => product.Update("Otro", null, null, -1m, Bebidas, Bebidas));
+
+        Assert.Equal("Agua mineral 500 ml", product.Name);
+        Assert.Equal(1500m, product.Price);
     }
 
     [Fact]
@@ -104,7 +119,7 @@ public class ProductTests
     {
         var product = NewProduct();
 
-        Assert.Throws<ConflictException>(() => product.Update("X", null, null, Bebidas, Inactive("Muerta")));
-        Assert.Throws<ConflictException>(() => product.Update("X", null, null, Inactive("Muerta"), Bebidas));
+        Assert.Throws<ConflictException>(() => product.Update("X", null, null, 1m, Bebidas, Inactive("Muerta")));
+        Assert.Throws<ConflictException>(() => product.Update("X", null, null, 1m, Inactive("Muerta"), Bebidas));
     }
 }

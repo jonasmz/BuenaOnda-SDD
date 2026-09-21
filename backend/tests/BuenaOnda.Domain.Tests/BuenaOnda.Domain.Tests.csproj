@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\BuenaOnda.Domain\BuenaOnda.Domain.csproj" />
+    <ProjectReference Include="..\..\src\BuenaOnda.Application\BuenaOnda.Application.csproj" />
   </ItemGroup>
 
 </Project>
