@@ -20,6 +20,15 @@ public static class DependencyInjection
         services.AddScoped<AddOption>();
         services.AddScoped<AddCharacteristic>();
         services.AddScoped<RemoveCharacteristic>();
+        services.AddScoped<DeactivateCategory>();
+        services.AddScoped<ReactivateCategory>();
+        services.AddScoped<DeactivateProduct>();
+        services.AddScoped<ReactivateProduct>();
+        services.AddScoped<UpdateOption>();
+        services.AddScoped<SetOptionAvailability>();
+        services.AddScoped<DeactivateOption>();
+        services.AddScoped<ReactivateOption>();
+        services.AddScoped<DeleteOption>();
         return services;
     }
 }

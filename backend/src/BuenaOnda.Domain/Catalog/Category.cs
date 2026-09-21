@@ -41,4 +41,9 @@ public sealed class Category
         Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
     }
 
+
+    /// <summary>Baja reversible: la categoría conserva su información y sus productos.</summary>
+    public void Deactivate() => IsActive = false;
+
+    public void Reactivate() => IsActive = true;
 }

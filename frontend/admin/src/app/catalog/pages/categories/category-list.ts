@@ -29,9 +29,17 @@ import { CatalogApiService } from '../../services/catalog-api.service';
               </span>
             </td>
             <td class="text-end">
-              <a class="btn btn-sm btn-outline-primary" [routerLink]="[category.id, 'edit']">
+              <a class="btn btn-sm btn-outline-primary me-1" [routerLink]="[category.id, 'edit']">
                 <i class="fa-solid fa-pen me-1"></i>Editar
               </a>
+              <button type="button" class="btn btn-sm" [class.btn-outline-warning]="category.isActive"
+                [class.btn-outline-success]="!category.isActive" (click)="toggle(category)">
+                @if (category.isActive) {
+                  <i class="fa-solid fa-ban me-1"></i>Dar de baja
+                } @else {
+                  <i class="fa-solid fa-rotate-left me-1"></i>Reactivar
+                }
+              </button>
             </td>
           </tr>
         } @empty {
@@ -50,6 +58,14 @@ export class CategoryList {
     this.api.listCategories(true).subscribe({
       next: (categories) => this.categories.set(categories),
       error: () => this.error.set('No se pudieron cargar las categorías.'),
+    });
+  }
+
+  protected toggle(category: Category): void {
+    const request = category.isActive ? this.api.deactivateCategory(category.id) : this.api.reactivateCategory(category.id);
+    request.subscribe({
+      next: (updated) => this.categories.update((list) => list.map((c) => (c.id === updated.id ? updated : c))),
+      error: () => this.error.set('No se pudo cambiar el estado de la categoría.'),
     });
   }
 }

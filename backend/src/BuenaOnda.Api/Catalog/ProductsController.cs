@@ -15,6 +15,8 @@ public sealed record CreateProductRequest(
     string? Name, string? Description, string? ImageUrl, Guid? CategoryId,
     IReadOnlyList<string>? Characteristics, IReadOnlyList<OptionRequest>? Options);
 
+public sealed record AvailabilityRequest(bool? IsMarkedAvailable);
+
 public sealed record UpdateProductRequest(string? Name, string? Description, string? ImageUrl, Guid? CategoryId);
 
 public sealed class ProductsController : CatalogControllerBase
@@ -64,4 +66,41 @@ public sealed class ProductsController : CatalogControllerBase
     public async Task<ProductView> RemoveCharacteristic(
         [FromServices] RemoveCharacteristic useCase, Guid id, Guid characteristicId, CancellationToken ct) =>
         await useCase.ExecuteAsync(id, characteristicId, ct);
+
+    [HttpPost("{id:guid}/deactivate")]
+    public async Task<ProductView> Deactivate([FromServices] DeactivateProduct useCase, Guid id, CancellationToken ct) =>
+        await useCase.ExecuteAsync(id, ct);
+
+    [HttpPost("{id:guid}/reactivate")]
+    public async Task<ProductView> Reactivate([FromServices] ReactivateProduct useCase, Guid id, CancellationToken ct) =>
+        await useCase.ExecuteAsync(id, ct);
+
+    /// <summary>Modifica valores, precio, descripción e imagen; la marca manual solo cambia con <c>availability</c>.</summary>
+    [HttpPut("{id:guid}/options/{optionId:guid}")]
+    public async Task<ProductView> UpdateOption(
+        [FromServices] UpdateOption useCase, Guid id, Guid optionId, OptionRequest request, CancellationToken ct) =>
+        await useCase.ExecuteAsync(id, optionId, request.ToInput(), ct);
+
+    [HttpPut("{id:guid}/options/{optionId:guid}/availability")]
+    public async Task<ProductView> SetAvailability(
+        [FromServices] SetOptionAvailability useCase, Guid id, Guid optionId, AvailabilityRequest request, CancellationToken ct) =>
+        await useCase.ExecuteAsync(id, optionId, request.IsMarkedAvailable, ct);
+
+    [HttpPost("{id:guid}/options/{optionId:guid}/deactivate")]
+    public async Task<ProductView> DeactivateOption(
+        [FromServices] DeactivateOption useCase, Guid id, Guid optionId, CancellationToken ct) =>
+        await useCase.ExecuteAsync(id, optionId, ct);
+
+    [HttpPost("{id:guid}/options/{optionId:guid}/reactivate")]
+    public async Task<ProductView> ReactivateOption(
+        [FromServices] ReactivateOption useCase, Guid id, Guid optionId, CancellationToken ct) =>
+        await useCase.ExecuteAsync(id, optionId, ct);
+
+    [HttpDelete("{id:guid}/options/{optionId:guid}")]
+    public async Task<IActionResult> DeleteOption(
+        [FromServices] DeleteOption useCase, Guid id, Guid optionId, CancellationToken ct)
+    {
+        await useCase.ExecuteAsync(id, optionId, ct);
+        return NoContent();
+    }
 }

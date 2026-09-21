@@ -44,8 +44,23 @@ public sealed class SellableOption
     /// <summary>Reemplaza los valores y recalcula la huella con las características vigentes del producto.</summary>
     internal void SetValues(IEnumerable<OptionValue> values, IReadOnlyList<VariationCharacteristic> characteristics)
     {
-        _values.Clear();
-        _values.AddRange(values);
+        // Se modifican en el sitio los valores existentes: reemplazarlos por otros con la misma clave
+        // rompería el seguimiento de cambios de la persistencia.
+        var incoming = values.ToList();
+        _values.RemoveAll(v => incoming.All(n => n.CharacteristicId != v.CharacteristicId));
+        foreach (var value in incoming)
+        {
+            var existing = _values.FirstOrDefault(v => v.CharacteristicId == value.CharacteristicId);
+            if (existing is null)
+            {
+                _values.Add(value);
+            }
+            else
+            {
+                existing.Change(value.Value);
+            }
+        }
+
         Resign(characteristics);
     }
 
@@ -57,11 +72,21 @@ public sealed class SellableOption
         ComputeSignature(characteristics.Where(c => c.Id != characteristicId).ToList());
 
     private string ComputeSignature(IEnumerable<VariationCharacteristic> characteristics) =>
+        Sign(characteristics, _values);
+
+    /// <summary>Huella de un conjunto de valores frente a las características dadas.</summary>
+    internal static string Sign(IEnumerable<VariationCharacteristic> characteristics, IReadOnlyList<OptionValue> values) =>
         string.Join(
             '\u001f',
             characteristics
                 .OrderBy(c => c.NormalizedName, StringComparer.Ordinal)
-                .Select(c => $"{c.NormalizedName}={_values.First(v => v.CharacteristicId == c.Id).NormalizedValue}"));
+                .Select(c => $"{c.NormalizedName}={values.First(v => v.CharacteristicId == c.Id).NormalizedValue}"));
+
+    internal void SetAvailability(bool isMarkedAvailable) => IsMarkedAvailable = isMarkedAvailable;
+
+    internal void Deactivate() => IsActive = false;
+
+    internal void Reactivate() => IsActive = true;
 
     internal void DropValue(Guid characteristicId) => _values.RemoveAll(v => v.CharacteristicId == characteristicId);
 
@@ -74,9 +99,10 @@ public sealed class SellableOption
             throw new ValidationException("El precio es obligatorio y no puede ser negativo.");
         }
 
+        var image = ImageReference.Normalize(imageUrl);
         Price = price.Value;
         Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
-        ImageUrl = ImageReference.Normalize(imageUrl);
+        ImageUrl = image;
     }
 
     /// <summary>Disponibilidad efectiva: marca manual, opción activa, producto activo y categoría activa.</summary>

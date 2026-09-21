@@ -45,9 +45,17 @@ import { CatalogApiService } from '../../services/catalog-api.service';
               }
             </td>
             <td class="text-end">
-              <a class="btn btn-sm btn-outline-primary" [routerLink]="[product.id, 'edit']">
+              <a class="btn btn-sm btn-outline-primary me-1" [routerLink]="[product.id, 'edit']">
                 <i class="fa-solid fa-pen me-1"></i>Editar
               </a>
+              <button type="button" class="btn btn-sm" [class.btn-outline-warning]="product.isActive"
+                [class.btn-outline-success]="!product.isActive" (click)="toggle(product)">
+                @if (product.isActive) {
+                  <i class="fa-solid fa-ban me-1"></i>Dar de baja
+                } @else {
+                  <i class="fa-solid fa-rotate-left me-1"></i>Reactivar
+                }
+              </button>
             </td>
           </tr>
         } @empty {
@@ -74,5 +82,13 @@ export class ProductList {
 
   protected categoryName(id: string): string {
     return this.names().get(id) ?? '';
+  }
+
+  protected toggle(product: Product): void {
+    const request = product.isActive ? this.api.deactivateProduct(product.id) : this.api.reactivateProduct(product.id);
+    request.subscribe({
+      next: (updated) => this.products.update((list) => list.map((p) => (p.id === updated.id ? updated : p))),
+      error: () => this.error.set('No se pudo cambiar el estado del producto.'),
+    });
   }
 }

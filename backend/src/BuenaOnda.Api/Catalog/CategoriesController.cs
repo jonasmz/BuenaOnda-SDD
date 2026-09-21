@@ -28,4 +28,12 @@ public sealed class CategoriesController : CatalogControllerBase
     public async Task<CategoryView> Update(
         [FromServices] UpdateCategory useCase, Guid id, CategoryRequest request, CancellationToken ct) =>
         await useCase.ExecuteAsync(id, request.Name, request.Description, ct);
+
+    [HttpPost("{id:guid}/deactivate")]
+    public async Task<CategoryView> Deactivate([FromServices] DeactivateCategory useCase, Guid id, CancellationToken ct) =>
+        await useCase.ExecuteAsync(id, ct);
+
+    [HttpPost("{id:guid}/reactivate")]
+    public async Task<CategoryView> Reactivate([FromServices] ReactivateCategory useCase, Guid id, CancellationToken ct) =>
+        await useCase.ExecuteAsync(id, ct);
 }

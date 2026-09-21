@@ -2,9 +2,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Characteristic, SellableOption } from '../../models/product';
+import { Characteristic, Product, SellableOption } from '../../models/product';
 import { Category } from '../../models/category';
 import { CatalogApiService } from '../../services/catalog-api.service';
+import { OptionForm } from '../../components/option-form/option-form';
 import { emptyVariation, VariationDraft, VariationEditor } from '../../components/variation-editor/variation-editor';
 
 /**
@@ -13,7 +14,7 @@ import { emptyVariation, VariationDraft, VariationEditor } from '../../component
  */
 @Component({
   selector: 'app-product-form',
-  imports: [ReactiveFormsModule, RouterLink, VariationEditor],
+  imports: [ReactiveFormsModule, RouterLink, VariationEditor, OptionForm],
   template: `
     <h1 class="h3 mb-3">{{ id() ? 'Modificar producto' : 'Nuevo producto' }}</h1>
     @if (error()) {
@@ -51,32 +52,10 @@ import { emptyVariation, VariationDraft, VariationEditor } from '../../component
         <app-variation-editor [(draft)]="variation" />
       } @else {
         <h2 class="h5">Opciones</h2>
-        <table class="table table-sm">
-          <thead>
-            <tr>
-              @for (characteristic of characteristics(); track characteristic.id) {
-                <th>{{ characteristic.name }}</th>
-              }
-              <th>Precio</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (option of options(); track option.id) {
-              <tr>
-                @for (characteristic of characteristics(); track characteristic.id) {
-                  <td>{{ option.values[characteristic.name] }}</td>
-                }
-                <td>{{ option.price }}</td>
-                <td>
-                  <span class="badge" [class.bg-success]="option.isAvailable" [class.bg-warning]="!option.isAvailable">
-                    {{ option.isAvailable ? 'Disponible' : 'No disponible' }}
-                  </span>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+        @for (option of options(); track option.id) {
+          <app-option-form [productId]="id()!" [option]="option" [characteristics]="characteristics()"
+            (productChanged)="applyProduct($event)" (removed)="reload()" />
+        }
       }
       <button class="btn btn-primary me-2" type="submit" [disabled]="saving()">
         <i class="fa-solid fa-floppy-disk me-1"></i>Guardar
@@ -107,24 +86,30 @@ export class ProductForm {
 
   constructor() {
     this.api.listCategories(true).subscribe((categories) => this.categories.set(categories));
-    queueMicrotask(() => {
-      const id = this.id();
-      if (id) {
-        this.api.getProduct(id).subscribe({
-          next: (p) => {
-            this.form.patchValue({
-              name: p.name,
-              categoryId: p.categoryId,
-              description: p.description ?? '',
-              imageUrl: p.imageUrl ?? '',
-            });
-            this.characteristics.set(p.characteristics);
-            this.options.set(p.options);
-          },
-          error: () => this.error.set('No se encontró el producto.'),
-        });
-      }
-    });
+    queueMicrotask(() => this.reload());
+  }
+
+  protected reload(): void {
+    const id = this.id();
+    if (id) {
+      this.api.getProduct(id).subscribe({
+        next: (p) => {
+          this.form.patchValue({
+            name: p.name,
+            categoryId: p.categoryId,
+            description: p.description ?? '',
+            imageUrl: p.imageUrl ?? '',
+          });
+          this.applyProduct(p);
+        },
+        error: () => this.error.set('No se encontró el producto.'),
+      });
+    }
+  }
+
+  protected applyProduct(product: Product): void {
+    this.characteristics.set(product.characteristics);
+    this.options.set(product.options);
   }
 
   protected save(): void {

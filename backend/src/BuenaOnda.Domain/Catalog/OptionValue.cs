@@ -16,6 +16,12 @@ public sealed class OptionValue
         NormalizedValue = Catalog.NormalizedName.Normalize(value);
     }
 
+    internal void Change(string value)
+    {
+        Value = value.Trim();
+        NormalizedValue = Catalog.NormalizedName.Normalize(value);
+    }
+
     public Guid CharacteristicId { get; private set; }
 
     public string Value { get; private set; }

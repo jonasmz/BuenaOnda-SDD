@@ -120,15 +120,23 @@ public sealed class ListProducts(IProductRepository products, ICategoryRepositor
 /// <summary>Base de los casos de uso que modifican la estructura de un producto ya existente.</summary>
 public abstract class ProductStructureUseCase(IProductRepository products, ICategoryRepository categories, IUnitOfWork unitOfWork)
 {
+    protected Task<ProductView> ApplyAsync(
+        Guid productId, Action<Product, Category> change, CancellationToken cancellationToken) =>
+        ApplyAsync(productId, (product, category) =>
+        {
+            change(product, category);
+            return Task.CompletedTask;
+        }, cancellationToken);
+
     protected async Task<ProductView> ApplyAsync(
-        Guid productId, Action<Product, Category> change, CancellationToken cancellationToken)
+        Guid productId, Func<Product, Category, Task> change, CancellationToken cancellationToken)
     {
         var product = await products.GetByIdAsync(productId, cancellationToken)
             ?? throw new NotFoundException($"No existe el producto {productId}.");
         var category = await categories.GetByIdAsync(product.CategoryId, cancellationToken)
             ?? throw new NotFoundException($"No existe la categoría {product.CategoryId}.");
 
-        change(product, category);
+        await change(product, category);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return ProductView.From(product, category);
     }
@@ -156,4 +164,61 @@ public sealed class RemoveCharacteristic(IProductRepository products, ICategoryR
 {
     public Task<ProductView> ExecuteAsync(Guid productId, Guid characteristicId, CancellationToken cancellationToken = default) =>
         ApplyAsync(productId, (product, category) => product.RemoveCharacteristic(characteristicId, category), cancellationToken);
+}
+
+public sealed class DeactivateProduct(IProductRepository products, ICategoryRepository categories, IUnitOfWork unitOfWork)
+    : ProductStructureUseCase(products, categories, unitOfWork)
+{
+    public Task<ProductView> ExecuteAsync(Guid productId, CancellationToken cancellationToken = default) =>
+        ApplyAsync(productId, (product, _) => product.Deactivate(), cancellationToken);
+}
+
+public sealed class ReactivateProduct(IProductRepository products, ICategoryRepository categories, IUnitOfWork unitOfWork)
+    : ProductStructureUseCase(products, categories, unitOfWork)
+{
+    public Task<ProductView> ExecuteAsync(Guid productId, CancellationToken cancellationToken = default) =>
+        ApplyAsync(productId, (product, _) => product.Reactivate(), cancellationToken);
+}
+
+public sealed class UpdateOption(IProductRepository products, ICategoryRepository categories, IUnitOfWork unitOfWork)
+    : ProductStructureUseCase(products, categories, unitOfWork)
+{
+    public Task<ProductView> ExecuteAsync(
+        Guid productId, Guid optionId, OptionInput input, CancellationToken cancellationToken = default) =>
+        ApplyAsync(productId, (product, category) => product.UpdateOption(optionId, input.ToDraft(), category), cancellationToken);
+}
+
+public sealed class SetOptionAvailability(IProductRepository products, ICategoryRepository categories, IUnitOfWork unitOfWork)
+    : ProductStructureUseCase(products, categories, unitOfWork)
+{
+    public Task<ProductView> ExecuteAsync(
+        Guid productId, Guid optionId, bool? isMarkedAvailable, CancellationToken cancellationToken = default) =>
+        ApplyAsync(
+            productId, (product, category) => product.SetOptionAvailability(optionId, isMarkedAvailable, category), cancellationToken);
+}
+
+public sealed class DeactivateOption(IProductRepository products, ICategoryRepository categories, IUnitOfWork unitOfWork)
+    : ProductStructureUseCase(products, categories, unitOfWork)
+{
+    public Task<ProductView> ExecuteAsync(Guid productId, Guid optionId, CancellationToken cancellationToken = default) =>
+        ApplyAsync(productId, (product, category) => product.DeactivateOption(optionId, category), cancellationToken);
+}
+
+public sealed class ReactivateOption(IProductRepository products, ICategoryRepository categories, IUnitOfWork unitOfWork)
+    : ProductStructureUseCase(products, categories, unitOfWork)
+{
+    public Task<ProductView> ExecuteAsync(Guid productId, Guid optionId, CancellationToken cancellationToken = default) =>
+        ApplyAsync(productId, (product, category) => product.ReactivateOption(optionId, category), cancellationToken);
+}
+
+public sealed class DeleteOption(
+    IProductRepository products, ICategoryRepository categories, IUnitOfWork unitOfWork, IOptionReferenceChecker references)
+    : ProductStructureUseCase(products, categories, unitOfWork)
+{
+    public Task<ProductView> ExecuteAsync(Guid productId, Guid optionId, CancellationToken cancellationToken = default) =>
+        ApplyAsync(productId, async (product, category) =>
+        {
+            var referenced = await references.IsReferencedAsync(optionId, cancellationToken);
+            product.RemoveOption(optionId, referenced, category);
+        }, cancellationToken);
 }

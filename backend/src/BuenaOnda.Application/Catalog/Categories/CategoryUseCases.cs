@@ -56,3 +56,27 @@ public sealed class ListCategories(ICategoryRepository categories)
     public async Task<IReadOnlyList<CategoryView>> ExecuteAsync(bool includeInactive, CancellationToken cancellationToken = default) =>
         (await categories.ListAsync(includeInactive, cancellationToken)).Select(CategoryView.From).ToList();
 }
+
+public sealed class DeactivateCategory(ICategoryRepository categories, IUnitOfWork unitOfWork)
+{
+    public async Task<CategoryView> ExecuteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var category = await categories.GetByIdAsync(id, cancellationToken)
+            ?? throw new NotFoundException($"No existe la categoría {id}.");
+        category.Deactivate();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return CategoryView.From(category);
+    }
+}
+
+public sealed class ReactivateCategory(ICategoryRepository categories, IUnitOfWork unitOfWork)
+{
+    public async Task<CategoryView> ExecuteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var category = await categories.GetByIdAsync(id, cancellationToken)
+            ?? throw new NotFoundException($"No existe la categoría {id}.");
+        category.Reactivate();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return CategoryView.From(category);
+    }
+}

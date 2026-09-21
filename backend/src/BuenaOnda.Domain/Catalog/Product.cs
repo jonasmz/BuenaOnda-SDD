@@ -148,6 +148,74 @@ public sealed class Product
         }
     }
 
+    /// <summary>Baja reversible del producto; no altera la marca manual de sus opciones (invariante 9).</summary>
+    public void Deactivate() => IsActive = false;
+
+    public void Reactivate() => IsActive = true;
+
+    /// <summary>Modifica valores, precio, descripción e imagen de una opción; el id no cambia (FR-012, FR-014).</summary>
+    public void UpdateOption(
+        Guid optionId, OptionDraft draft, Category category)
+    {
+        EnsureModifiable(category);
+        var option = GetOption(optionId);
+        var values = ResolveValues(draft.Values);
+        var signature = SellableOption.Sign(_characteristics, values);
+        if (_options.Any(o => o.Id != optionId && o.Signature == signature))
+        {
+            throw new ConflictException("Ya existe otra opción del producto con esos mismos valores (aunque esté inactiva).");
+        }
+
+        option.Update(draft.Price, draft.Description, draft.ImageUrl);
+        option.SetValues(values, _characteristics);
+    }
+
+    /// <summary>Fija la marca manual de disponibilidad de una opción (FR-015).</summary>
+    public void SetOptionAvailability(Guid optionId, bool? isMarkedAvailable, Category category)
+    {
+        EnsureModifiable(category);
+        var option = GetOption(optionId);
+        option.SetAvailability(isMarkedAvailable
+            ?? throw new ValidationException("La disponibilidad de la opción es obligatoria."));
+    }
+
+    public void DeactivateOption(Guid optionId, Category category)
+    {
+        EnsureModifiable(category);
+        GetOption(optionId).Deactivate();
+    }
+
+    public void ReactivateOption(Guid optionId, Category category)
+    {
+        EnsureModifiable(category);
+        GetOption(optionId).Reactivate();
+    }
+
+    /// <summary>
+    /// Elimina definitivamente una opción solo si nunca fue referenciada y no es la última del producto
+    /// (invariantes 10 y 11); quien llama informa si fue referenciada.
+    /// </summary>
+    public void RemoveOption(Guid optionId, bool isReferenced, Category category)
+    {
+        EnsureModifiable(category);
+        var option = GetOption(optionId);
+        if (isReferenced)
+        {
+            throw new ConflictException("La opción fue referenciada por otras funcionalidades: solo puede darse de baja.");
+        }
+
+        if (_options.Count == 1)
+        {
+            throw new ConflictException("Un producto conserva siempre al menos una opción.");
+        }
+
+        _options.Remove(option);
+    }
+
+    private SellableOption GetOption(Guid optionId) =>
+        _options.FirstOrDefault(o => o.Id == optionId)
+            ?? throw new NotFoundException($"No existe la opción {optionId} en el producto.");
+
     /// <summary>Disponible si alguna de sus opciones tiene disponibilidad efectiva.</summary>
     public bool IsAvailable(Category category) => _options.Any(o => o.IsAvailable(this, category));
 
