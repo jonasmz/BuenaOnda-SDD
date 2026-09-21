@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Ruido de recursos localizados de paquetes de herramientas; no afecta al código. -->
+    <NoWarn>$(NoWarn);NETSDK1188</NoWarn>
+  </PropertyGroup>
+</Project>

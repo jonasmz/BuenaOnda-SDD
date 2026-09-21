@@ -1,0 +1,82 @@
+# Entorno de desarrollo con recarga en caliente.
+#   Front (Angular): http://localhost:8855   API (.NET): http://localhost:1806
+# Uso: copiar .env.example a .env, definir POSTGRES_PASSWORD y ejecutar `docker compose up`
+#      (en desarrollo la API aplica las migraciones de EF al arrancar).
+# La contraseña NO se versiona: .env está ignorado por git.
+name: buenaonda-sdd
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD en .env (ver .env.example)}"
+      POSTGRES_DB: buenaonda_dev
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d buenaonda_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    working_dir: /src/backend/src/BuenaOnda.Api
+    command: dotnet watch run --no-launch-profile --non-interactive
+    ports:
+      - "1806:1806"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:1806
+      ConnectionStrings__Catalog: "Host=postgres;Port=5432;Database=buenaonda_dev;Username=postgres;Password=${POSTGRES_PASSWORD}"
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+      DOTNET_WATCH_SUPPRESS_LAUNCH_BROWSER: "1"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+    volumes:
+      - ./backend:/src/backend:z
+      # bin/obj propios del contenedor para no pisar los del host.
+      - api_bin:/src/backend/src/BuenaOnda.Api/bin
+      - api_obj:/src/backend/src/BuenaOnda.Api/obj
+      - app_bin:/src/backend/src/BuenaOnda.Application/bin
+      - app_obj:/src/backend/src/BuenaOnda.Application/obj
+      - dom_bin:/src/backend/src/BuenaOnda.Domain/bin
+      - dom_obj:/src/backend/src/BuenaOnda.Domain/obj
+      - inf_bin:/src/backend/src/BuenaOnda.Infrastructure/bin
+      - inf_obj:/src/backend/src/BuenaOnda.Infrastructure/obj
+      - nuget:/root/.nuget/packages
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    image: node:22-alpine
+    working_dir: /app
+    command:
+      - sh
+      - -c
+      - npm install --no-audit --no-fund && npx ng serve --host 0.0.0.0 --port 8855 --poll 500 --proxy-config proxy.docker.conf.json
+    ports:
+      - "8855:8855"
+    environment:
+      NG_CLI_ANALYTICS: "false"
+    volumes:
+      - ./frontend/admin:/app:z
+      - web_node_modules:/app/node_modules
+      - web_ng_cache:/app/.angular
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  nuget:
+  api_bin:
+  api_obj:
+  app_bin:
+  app_obj:
+  dom_bin:
+  dom_obj:
+  inf_bin:
+  inf_obj:
+  web_node_modules:
+  web_ng_cache:

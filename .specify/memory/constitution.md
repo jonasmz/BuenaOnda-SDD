@@ -1,38 +1,22 @@
 <!--
 Sync Impact Report
-- Versión: 1.0.0 → 1.1.0 (MINOR). Motivo: 1.0.0 ya fue ratificada en el historial (commit "docs:
-  ratify constitution v1.0.0", #1), por lo que no aplica tratarlo como ajuste previo a la
-  ratificación. La política de versionado clasifica como MINOR agregar restricciones o ampliar
-  guías materialmente: se vuelve normativa la regla `psql-17` y se agrega la regla de
-  verificación contextual. El resto son correcciones de sobre-especificación.
-- Principios agregados o eliminados: ninguno; numeración I a IX intacta y propósito de cada
-  principio sin cambios.
-- Principios con cambio normativo real:
-  - I: el plan mantiene trazabilidad a los criterios de aceptación en lugar de listarlos de nuevo;
-    verificación de `/speckit.analyze` sin cambios de fondo.
-  - II: la regla sobre "cliente" de barra ya no decide su modelo; YAGNI reformulado en forma
-    normativa.
-  - III: ya no se fija la ubicación física de EF Core, Identity ni JWT; verificación contextual.
-  - IV: se distingue stack obligatorio de dependencias complementarias; `psql-17` pasa a ser
-    normativa; verificación de `/speckit.analyze` ajustada.
-  - V: datos públicos ya no son lista exhaustiva; regla de endpoints expresada como
-    comportamiento, sin fijar topología de API; verificación contextual.
-  - VII: la referencia a "cliente" de barra remite a la nueva formulación del Principio II;
-    formas verbales normalizadas.
-  - VIII y IX: verificación contextual (solo cuando el plan toca productos/inventario o el
-    modelo de datos).
-- Secciones modificadas: Restricciones tecnológicas y arquitectónicas (nota `psql-17` eliminada,
-  ahora en Principio IV); Reglas de desarrollo y verificación constitucional ("Constitution Check"
-  con "no aplicable" justificado).
-- Normalización de "DEBE / NO DEBE / PUEDE" en frases que imponían obligaciones de forma
-  explicativa (Principios I, II, III, IV, VI, VII y VIII).
-- Sin cambios: alcance funcional, lista canónica fuera de alcance, stack tecnológico, gobernanza,
-  jerarquía de fuentes y esquema de versionado. No se incorporaron tecnologías ni decisiones de
-  dominio pendientes.
-- Plantillas: sin cambios requeridos; el "Constitution Check" del plan las lee en tiempo de
-  ejecución. Persisten las advertencias previas sobre "Scale/Scope" de plan-template y las rutas
-  de ejemplo de tasks-template.
-- TODOs diferidos: ninguno.
+- Versión: 1.2.0 → 2.0.0 (MAJOR). Motivo: se redefine la regla central del Principio VIII: se elimina
+  la exigencia de representar variantes de producto (clases de variación) y se adopta un catálogo
+  plano en el que cada tamaño, presentación, sabor o variedad es un producto distinto. Según el
+  esquema de versionado, redefinir un principio fundamental es un cambio MAJOR.
+- Principios agregados o eliminados: ninguno; numeración I a IX intacta.
+- Principio con cambio normativo: VIII (catálogo plano sin variantes; se conservan la extensibilidad
+  ante productos nuevos, la futura incorporación de tragos y las dos modalidades de inventario; la
+  verificación pasa de "nuevo tipo de variante" a "producto nuevo sin modificar el modelo").
+- Sin cambios: alcance funcional, stack tecnológico, demás principios (incluida la excepción
+  transitoria del Principio IV), gobernanza, jerarquía de fuentes y esquema de versionado.
+- Origen: decisión expresa del responsable del proyecto de eliminar por completo las variantes por
+  considerarlas complejidad innecesaria para esta aplicación.
+- Impacto: la especificación, el plan, el modelo de datos, el contrato, las tareas y el código de la
+  feature 001 se rehacen sin variantes. Los requerimientos funcionales que mencionen variantes
+  (`../docs/system_requirements.txt`) DEBEN actualizarse por separado (Principio IX).
+- Plantillas: sin cambios requeridos.
+- TODOs diferidos: actualizar los requerimientos funcionales para reflejar el catálogo plano.
 -->
 
 # Constitución de BuenaOndaSK
@@ -153,6 +137,12 @@ reportar toda referencia del dominio o de los casos de uso a tipos de EF Core, I
 - Las funcionalidades administrativas DEBEN usar ASP.NET Identity, JWT y autorización basada en
   usuarios y roles. Los roles, permisos y la matriz de autorización NO se definen aquí; se definen en
   la especificación correspondiente.
+- Excepción transitoria: hasta que la funcionalidad de usuarios y roles esté implementada, las
+  funcionalidades administrativas PUEDEN implementarse sin autenticación ni autorización, siempre
+  que: (a) sus rutas administrativas queden agrupadas de modo que la protección pueda aplicarse de
+  una sola vez; (b) NO se desplieguen ni se expongan fuera del entorno de desarrollo; (c) el plan de
+  cada feature registre esta excepción y su cierre. La excepción DEBE cerrarse con la implementación
+  de usuarios y roles y NO PUEDE mantenerse en ningún entorno accesible por terceros.
 - La gestión de usuarios de acceso NO DEBE convertirse en gestión de empleados.
 - Las incompatibilidades entre versiones o librerías del stack DEBEN resolverse en el plan, sin
   cambiar el stack.
@@ -233,13 +223,14 @@ transiciones sin especificación.
 
 **Regla**:
 
-- El modelo de productos DEBE representar distintas clases de variación (tamaños, presentaciones,
-  sabores, variedades y otras definibles después) sin estructuras específicas por producto derivadas
-  de los ejemplos actuales.
-- Incorporar nuevos productos o variantes NO DEBE requerir rediseñar el catálogo; el plan DEBE
-  demostrarlo. La futura incorporación de tragos DEBE ser posible sin rediseñar el modelo de
-  productos, pero NO DEBEN implementarse funcionalidades específicas de tragos hasta que se
-  requieran.
+- El catálogo DEBE ser plano: cada tamaño, presentación, sabor o variedad que se vende por separado
+  es un producto distinto, con su propio nombre y precio. El modelo NO DEBE incluir variantes,
+  opciones comercializables, características de variación ni estructuras equivalentes.
+- El modelo de productos NO DEBE incluir estructuras específicas por producto derivadas de los
+  ejemplos actuales.
+- Incorporar nuevos productos NO DEBE requerir rediseñar el catálogo; el plan DEBE demostrarlo. La
+  futura incorporación de tragos DEBE ser posible sin rediseñar el modelo de productos, pero NO
+  DEBEN implementarse funcionalidades específicas de tragos hasta que se requieran.
 - El inventario DEBE contemplar dos modalidades conceptuales: productos elaborados (asociables a
   receta, con ingredientes y cantidades cuyo consumo pueda derivarse de la elaboración o venta) y
   productos de stock directo (controlados por existencias, sin receta necesaria).
@@ -249,9 +240,11 @@ transiciones sin especificación.
 
 **Justificación**: los requerimientos piden extensibilidad explícita y dos modalidades de inventario.
 
-**Verificación**: cuando el plan diseñe o modifique el modelo de productos, variantes o inventario,
-`/speckit.plan` DEBE incluir un escenario documentado que agregue un nuevo tipo de
-variante y un producto de cada modalidad de inventario sin modificar el modelo existente.
+**Verificación**: cuando el plan diseñe o modifique el modelo de productos o de inventario,
+`/speckit.plan` DEBE incluir un escenario documentado que agregue un producto de una categoría nueva
+y un producto de cada modalidad de inventario sin modificar el modelo existente;
+`/speckit.analyze` DEBE reportar cualquier concepto de variante que reaparezca en especificaciones,
+planes o tareas.
 
 ### IX. El modelo de datos surge de los requerimientos, no del esquema SQL de referencia
 
@@ -320,4 +313,4 @@ requerimientos siguen siendo la fuente de verdad sobre las capacidades concretas
 **Versionado** (semántico simple): MAJOR = elimina o redefine principios fundamentales;
 MINOR = agrega principios o restricciones; PATCH = aclaraciones de redacción sin cambio normativo.
 
-**Versión**: 1.1.0 | **Ratificada**: 2026-09-21 | **Última modificación**: 2026-09-21
+**Versión**: 2.0.0 | **Ratificada**: 2026-09-21 | **Última modificación**: 2026-09-21
