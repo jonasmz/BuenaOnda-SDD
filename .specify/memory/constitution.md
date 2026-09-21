@@ -1,20 +1,37 @@
 <!--
 Sync Impact Report
-- Versión: (plantilla sin ratificar) → 1.0.0
-- Principios modificados: ninguno renombrado; se crean los principios I a IX desde la plantilla.
-- Secciones agregadas: Convenciones normativas; Restricciones tecnológicas y arquitectónicas;
-  Reglas de desarrollo dirigido por especificaciones y verificación constitucional;
-  Gobernanza (jerarquía de fuentes y versionado).
-- Secciones eliminadas: ninguna.
-- Plantillas revisadas:
-  - .specify/templates/plan-template.md: la sección "Constitution Check" delega en esta constitución
-    ("Gates determined based on constitution file"); sin ajuste manual obligatorio.
-    ⚠ Su campo "Scale/Scope" de ejemplo cita usuarios/pantallas; NO DEBE completarse con métricas
-    no definidas en los requerimientos.
-  - .specify/templates/spec-template.md: alineada; los criterios de aceptación deben ser verificables (Principio I).
-  - .specify/templates/tasks-template.md: ⚠ menciona pruebas como opcionales y rutas de ejemplo
-    (tests/contract/*.py); ajustar al stack .NET/Angular durante /speckit.tasks. Esta constitución
-    no exige pruebas con cobertura numérica.
+- Versión: 1.0.0 → 1.1.0 (MINOR). Motivo: 1.0.0 ya fue ratificada en el historial (commit "docs:
+  ratify constitution v1.0.0", #1), por lo que no aplica tratarlo como ajuste previo a la
+  ratificación. La política de versionado clasifica como MINOR agregar restricciones o ampliar
+  guías materialmente: se vuelve normativa la regla `psql-17` y se agrega la regla de
+  verificación contextual. El resto son correcciones de sobre-especificación.
+- Principios agregados o eliminados: ninguno; numeración I a IX intacta y propósito de cada
+  principio sin cambios.
+- Principios con cambio normativo real:
+  - I: el plan mantiene trazabilidad a los criterios de aceptación en lugar de listarlos de nuevo;
+    verificación de `/speckit.analyze` sin cambios de fondo.
+  - II: la regla sobre "cliente" de barra ya no decide su modelo; YAGNI reformulado en forma
+    normativa.
+  - III: ya no se fija la ubicación física de EF Core, Identity ni JWT; verificación contextual.
+  - IV: se distingue stack obligatorio de dependencias complementarias; `psql-17` pasa a ser
+    normativa; verificación de `/speckit.analyze` ajustada.
+  - V: datos públicos ya no son lista exhaustiva; regla de endpoints expresada como
+    comportamiento, sin fijar topología de API; verificación contextual.
+  - VII: la referencia a "cliente" de barra remite a la nueva formulación del Principio II;
+    formas verbales normalizadas.
+  - VIII y IX: verificación contextual (solo cuando el plan toca productos/inventario o el
+    modelo de datos).
+- Secciones modificadas: Restricciones tecnológicas y arquitectónicas (nota `psql-17` eliminada,
+  ahora en Principio IV); Reglas de desarrollo y verificación constitucional ("Constitution Check"
+  con "no aplicable" justificado).
+- Normalización de "DEBE / NO DEBE / PUEDE" en frases que imponían obligaciones de forma
+  explicativa (Principios I, II, III, IV, VI, VII y VIII).
+- Sin cambios: alcance funcional, lista canónica fuera de alcance, stack tecnológico, gobernanza,
+  jerarquía de fuentes y esquema de versionado. No se incorporaron tecnologías ni decisiones de
+  dominio pendientes.
+- Plantillas: sin cambios requeridos; el "Constitution Check" del plan las lee en tiempo de
+  ejecución. Persisten las advertencias previas sobre "Scale/Scope" de plan-template y las rutas
+  de ejemplo de tasks-template.
 - TODOs diferidos: ninguno.
 -->
 
@@ -56,12 +73,16 @@ Documentos de referencia:
   automáticamente en restricciones rígidas del modelo.
 - Cada requisito de una especificación DEBE tener criterios de aceptación verificables, sin fijar
   métricas numéricas que los requerimientos no definan.
+- La especificación DEBE contener los criterios de aceptación verificables. El plan técnico DEBE
+  mantener trazabilidad hacia los requisitos y criterios de aceptación que implementa, sin
+  necesidad de duplicar su contenido.
 
 **Justificación**: evita que la implementación decida por su cuenta lo que el negocio no definió.
 
 **Verificación**: `/speckit.analyze` DEBE rastrear cada requisito, entidad y tarea hasta una fuente
-citada; lo que no tenga fuente se reporta como hallazgo. `/speckit.plan` DEBE listar los criterios
-de aceptación de cada requisito.
+citada; lo que no tenga fuente se reporta como hallazgo. `/speckit.analyze` DEBE comprobar
+también la trazabilidad del plan y de las tareas hacia los criterios de aceptación de la
+especificación.
 
 ### II. Disciplina estricta de alcance
 
@@ -74,12 +95,15 @@ de aceptación de cada requisito.
   empleados y delivery de comidas.
 - Toda capacidad ausente de los requerimientos (por ejemplo reservas, turnos o estaciones de cocina
   del esquema SQL de referencia) está fuera de alcance por defecto.
-- En la barra, "cliente" es solo una cuenta o agrupación de consumo; NO constituye una entidad de
-  gestión de clientes.
+- La referencia a "cliente" dentro del contexto operativo de barra NO DEBE interpretarse como un
+  requisito de gestión de clientes ni obliga a introducir una entidad de gestión `Cliente`. La
+  representación funcional y técnica mediante la cual se individualizan los consumos de barra DEBE
+  definirse en la especificación funcional y en el plan correspondiente.
 - Ninguna especificación, modelo de datos, API, componente frontend o implementación DEBE incorporar
   capacidades fuera de alcance sin modificar antes los requerimientos y esta constitución.
-- Se aplica YAGNI a lo fuera de alcance, sin impedir la extensibilidad que los requerimientos exijan
-  expresamente (Principio VIII).
+- Las especificaciones y planes NO DEBEN introducir complejidad destinada exclusivamente a
+  funcionalidades fuera del alcance vigente. Esto NO impide la extensibilidad que los requerimientos
+  exijan expresamente (Principio VIII).
 
 **Justificación**: el alcance actual es acotado y el esquema SQL de referencia contiene conceptos que
 no lo integran.
@@ -92,41 +116,53 @@ canónica; `/speckit.analyze` DEBE reportar toda coincidencia.
 **Regla**:
 
 - El backend DEBE usar arquitectura hexagonal. Esta regla aplica al backend; la arquitectura del
-  frontend permanece abierta hasta el plan.
+  frontend DEBE definirse en el plan.
 - Dominio y casos de uso NO DEBEN depender de infraestructura, persistencia, frameworks externos ni
   mecanismos de presentación. Las dependencias DEBEN apuntar hacia el núcleo.
 - Persistencia, identidad y demás servicios externos DEBEN integrarse mediante puertos y
-  adaptadores. ASP.NET Identity, Entity Framework Core y la emisión y validación de JWT DEBEN residir
-  en adaptadores de infraestructura, no en el dominio ni en los casos de uso.
+  adaptadores. Entity Framework Core, ASP.NET Identity, JWT y cualquier otro detalle tecnológico
+  externo DEBEN permanecer fuera del dominio y de los casos de uso. Su ubicación concreta dentro de
+  los adaptadores, proyectos o capas externas DEBE definirse y justificarse en el plan técnico
+  respetando la dirección de dependencias de la arquitectura hexagonal.
 - Todo plan DEBE justificar cualquier decisión que afecte los límites dominio / aplicación /
   infraestructura.
 
 **Justificación**: los requerimientos establecen la arquitectura hexagonal como parte del stack.
 
-**Verificación**: `/speckit.plan` DEBE incluir un mapa de capas y puertos; `/speckit.analyze` DEBE
+**Verificación**: cuando una feature introduzca o modifique componentes del backend, `/speckit.plan`
+DEBE demostrar que la solución respeta las fronteras y la dirección de dependencias de la
+arquitectura hexagonal, sin documentar de nuevo la arquitectura completa; `/speckit.analyze` DEBE
 reportar toda referencia del dominio o de los casos de uso a tipos de EF Core, Identity o JWT.
 
 ### IV. Stack tecnológico e identidad establecidos
 
 **Regla**:
 
-- El stack es una restricción deliberada, no una sugerencia:
+- El siguiente stack base es obligatorio:
   - Backend: ASP.NET 10, Entity Framework Core, ASP.NET Identity, API con autenticación JWT.
   - Persistencia: PostgreSQL 17.
   - Frontend: Angular 22, Bootstrap 5, CoreUI for Angular Free, Bootswatch Minty, Font Awesome Free.
-- NO DEBEN sustituirse frameworks, bases de datos, sistemas de identidad ni librerías por
-  alternativas sin modificar los requerimientos y esta constitución.
+- NO DEBEN sustituirse estas tecnologías por alternativas sin modificar formalmente los
+  requerimientos y esta constitución.
+- La lista anterior NO es el conjunto exhaustivo de paquetes permitidos. PUEDEN incorporarse
+  librerías, paquetes y herramientas complementarias cuando sean necesarias para implementar una
+  capacidad especificada, sean compatibles con el stack establecido, no sustituyan una tecnología
+  obligatoria y su incorporación esté justificada en el plan técnico correspondiente.
+- La instancia PostgreSQL 17 utilizada por el entorno de desarrollo DEBE ejecutarse mediante el
+  contenedor Docker denominado `psql-17`.
 - Las funcionalidades administrativas DEBEN usar ASP.NET Identity, JWT y autorización basada en
   usuarios y roles. Los roles, permisos y la matriz de autorización NO se definen aquí; se definen en
   la especificación correspondiente.
 - La gestión de usuarios de acceso NO DEBE convertirse en gestión de empleados.
-- Las incompatibilidades entre versiones o librerías del stack se resuelven en el plan, sin cambiar
-  el stack.
+- Las incompatibilidades entre versiones o librerías del stack DEBEN resolverse en el plan, sin
+  cambiar el stack.
 
 **Justificación**: el stack forma parte de los requerimientos vigentes.
 
-**Verificación**: `/speckit.plan` DEBE declarar cada tecnología usada y contrastarla con esta lista;
-`/speckit.analyze` DEBE reportar dependencias fuera de ella.
+**Verificación**: `/speckit.plan` DEBE declarar y justificar las dependencias complementarias que incorpore;
+`/speckit.analyze` DEBE reportar sustituciones del stack obligatorio, tecnologías incompatibles
+con él y dependencias que introduzcan decisiones arquitectónicas contrarias a la constitución. NO
+DEBE reportar como violación una dependencia auxiliar solo por no figurar en la lista.
 
 ### V. Separación entre frontend administrativo/POS y catálogo público
 
@@ -140,16 +176,22 @@ reportar toda referencia del dominio o de los casos de uso a tipos de EF Core, I
   permisos ni funcionalidades administrativas.
 - El catálogo público NO DEBE exponer rutas, componentes, permisos ni funcionalidades
   administrativas o del POS.
-- Lo compartido se limita a datos de catálogo para presentación pública: producto, disponibilidad,
-  categoría, descripción, imagen y precio.
-- Todo endpoint accesible desde el catálogo público DEBE ser de solo lectura y NO DEBE exponer datos
-  ni operaciones administrativas. Si el catálogo consume la misma API o una distinta permanece
-  abierto hasta el plan.
+- La información accesible desde el catálogo público DEBE limitarse a información necesaria para la
+  consulta, presentación y funcionamiento de las capacidades públicas especificadas. Puede incluir,
+  entre otros datos públicos definidos por la correspondiente especificación, producto,
+  disponibilidad, categoría, descripción, imagen y precio.
+- El catálogo público NO DEBE acceder a información administrativa, permisos, estado operativo
+  interno no destinado al catálogo, operaciones administrativas ni capacidades del POS.
+- Las operaciones accesibles desde el catálogo público NO DEBEN modificar datos administrativos u
+  operativos ni crear o modificar pedidos reales; respecto de ellos solo PUEDEN ser de consulta.
+- El plan DEBE definir si ambos frontends consumen una misma API o APIs distintas, cómo se organizan
+  los endpoints y cómo se implementan técnicamente estos límites.
 
 **Justificación**: los requerimientos separan ambas aplicaciones funcional y operativamente.
 
-**Verificación**: `/speckit.plan` DEBE listar los artefactos de cada aplicación y los datos
-compartidos; `/speckit.analyze` DEBE reportar cualquier módulo, estado o endpoint de escritura
+**Verificación**: cuando una feature afecte al frontend administrativo/POS, al catálogo público, a la API consumida por
+alguno de ellos o a información compartida entre ambos, `/speckit.plan` DEBE identificar los
+artefactos de cada aplicación y los datos compartidos; `/speckit.analyze` DEBE reportar cualquier módulo, estado o endpoint de escritura
 compartido entre ellas.
 
 ### VI. El POS es el único canal de creación de pedidos reales
@@ -161,7 +203,7 @@ compartido entre ellas.
   estimación de costos.
 - El carrito público NO DEBE crear pedidos, enviarlos al POS, modificar pedidos existentes, iniciar
   procesos operativos ni sustituir la toma de pedidos del operador.
-- Romper esta regla exige modificar los requerimientos y esta constitución.
+- Esta regla NO DEBE romperse sin modificar antes los requerimientos y esta constitución.
 
 **Justificación**: los requerimientos definen al POS como único canal operativo de pedidos.
 
@@ -174,11 +216,12 @@ tarea del catálogo público crea o modifica pedidos.
 
 - Mesas y barra DEBEN tratarse como contextos operativos diferentes.
 - El consumo de una mesa se cobra por el consumo completo de la mesa; en la barra, por cliente
-  (según la aclaración del Principio II).
+  (sin decidir aún su representación; ver Principio II).
 - La cantidad actual de mesas NO DEBE codificarse como límite estructural fijo.
 - El operador DEBE poder establecer y modificar estados de pedidos. Los estados concretos y sus
   transiciones NO DEBEN inventarse hasta definirse en su especificación funcional.
-- Las reglas de dominio no establecidas permanecen explícitamente abiertas.
+- Las reglas de dominio no establecidas NO DEBEN decidirse fuera de la especificación funcional o
+  del plan correspondiente.
 
 **Justificación**: son reglas operativas ya definidas en los requerimientos.
 
@@ -195,17 +238,19 @@ transiciones sin especificación.
   de los ejemplos actuales.
 - Incorporar nuevos productos o variantes NO DEBE requerir rediseñar el catálogo; el plan DEBE
   demostrarlo. La futura incorporación de tragos DEBE ser posible sin rediseñar el modelo de
-  productos, pero NO se implementan funcionalidades específicas de tragos hasta que se requieran.
+  productos, pero NO DEBEN implementarse funcionalidades específicas de tragos hasta que se
+  requieran.
 - El inventario DEBE contemplar dos modalidades conceptuales: productos elaborados (asociables a
   receta, con ingredientes y cantidades cuyo consumo pueda derivarse de la elaboración o venta) y
   productos de stock directo (controlados por existencias, sin receta necesaria).
 - El modelo NO DEBE forzar recetas para todos los productos ni tratar todos como stock directo.
 - Unidades de medida, movimientos, ajustes, estructura definitiva de recetas y momento del descuento
-  de stock se resuelven en especificaciones y plan.
+  de stock DEBEN resolverse en especificaciones y plan.
 
 **Justificación**: los requerimientos piden extensibilidad explícita y dos modalidades de inventario.
 
-**Verificación**: `/speckit.plan` DEBE incluir un escenario documentado que agregue un nuevo tipo de
+**Verificación**: cuando el plan diseñe o modifique el modelo de productos, variantes o inventario,
+`/speckit.plan` DEBE incluir un escenario documentado que agregue un nuevo tipo de
 variante y un producto de cada modalidad de inventario sin modificar el modelo existente.
 
 ### IX. El modelo de datos surge de los requerimientos, no del esquema SQL de referencia
@@ -222,7 +267,7 @@ variante y un producto de cada modalidad de inventario sin modificar el modelo e
 **Justificación**: los requerimientos declaran que el esquema es orientativo y no prevalece sobre
 ellos.
 
-**Verificación**: el `data-model.md` de `/speckit.plan` DEBE indicar, para cada entidad, el
+**Verificación**: cuando un plan cree o modifique el modelo de datos, su `data-model.md` DEBE indicar, para cada entidad, el
 requerimiento que la origina; `/speckit.analyze` DEBE reportar entidades sin origen.
 
 ## Restricciones tecnológicas y arquitectónicas
@@ -230,8 +275,7 @@ requerimiento que la origina; `/speckit.analyze` DEBE reportar entidades sin ori
 Las restricciones vigentes se establecen en los Principios III (arquitectura hexagonal del backend),
 IV (stack e identidad) y V (separación de frontends); esta sección no las repite.
 
-Nota informativa, no normativa: la instancia de desarrollo de PostgreSQL se ejecuta en el contenedor
-Docker `psql-17`.
+La regla sobre el contenedor `psql-17` se establece en el Principio IV.
 
 ## Reglas de desarrollo dirigido por especificaciones y verificación constitucional
 
@@ -239,15 +283,18 @@ Docker `psql-17`.
   constitución.
 - Durante `/speckit.plan` y `/speckit.analyze` se DEBEN detectar explícitamente:
   - funcionalidades fuera de alcance;
-  - sustituciones no autorizadas del stack;
+  - sustituciones no autorizadas del stack obligatorio;
   - violaciones de la arquitectura hexagonal;
   - acoplamiento entre los dos frontends;
   - creación de pedidos desde el catálogo público;
   - modelados rígidos basados solo en ejemplos;
   - incorporación automática de conceptos del esquema SQL;
   - decisiones inventadas que los requerimientos reservaron para etapas posteriores.
-- La sección "Constitution Check" del plan DEBE evaluar cada principio I a IX con resultado
-  cumple / no cumple y su evidencia.
+- Las verificaciones de cada principio DEBEN aplicarse cuando el principio sea relevante para la
+  feature o cambio analizado.
+- Los Constitution Checks DEBEN evaluar todos los principios y marcar como "no aplicable", con una
+  breve justificación, aquellos que legítimamente no resulten afectados por la feature. Los
+  principios aplicables DEBEN indicar cumple / no cumple y la evidencia correspondiente.
 - Una implementación que contradiga un principio NO DEBE considerarse válida aunque funcione
   técnicamente.
 
@@ -266,11 +313,11 @@ requerimientos siguen siendo la fuente de verdad sobre las capacidades concretas
   afecten un principio no negociable.
 - Toda modificación DEBE evaluarse por su impacto sobre especificaciones, planes, tareas e
   implementaciones existentes.
-- La constitución evoluciona con poca frecuencia; lo que aún no sea estable permanece en
-  requerimientos, especificaciones o planes.
+- La constitución DEBE evolucionar con poca frecuencia; lo que aún no sea estable DEBE permanecer
+  en requerimientos, especificaciones o planes.
 - Toda revisión del proyecto DEBE verificar el cumplimiento constitucional.
 
 **Versionado** (semántico simple): MAJOR = elimina o redefine principios fundamentales;
 MINOR = agrega principios o restricciones; PATCH = aclaraciones de redacción sin cambio normativo.
 
-**Versión**: 1.0.0 | **Ratificada**: 2026-09-21 | **Última modificación**: 2026-09-21
+**Versión**: 1.1.0 | **Ratificada**: 2026-09-21 | **Última modificación**: 2026-09-21
